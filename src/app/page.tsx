@@ -207,8 +207,44 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 5. TESTIMONIALS */}
+      {/* 5. PRICING PLANS */}
       <section className="py-24 bg-[#F3F6FA] dark:bg-slate-950 transition-colors duration-300">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <h4 className="text-[#6C89EC] dark:text-blue-400 font-bold tracking-wider uppercase mb-3 text-sm">Pricing</h4>
+            <h2 className="text-4xl md:text-5xl font-bold text-[#14234b] dark:text-white mb-4">Simple, Transparent Pricing</h2>
+            <p className="text-[#59667a] dark:text-slate-400">No hidden fees. You only pay for what you wash.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <PricingCard 
+              title="Wash & Fold" 
+              price="$1.50" 
+              unit="per lb"
+              desc="Perfect for your everyday laundry needs."
+              features={["Premium detergents used", "Sorted by color", "Neatly folded and bagged", "48-hour standard delivery"]}
+            />
+            <PricingCard 
+              title="Dry Cleaning" 
+              price="$5.00" 
+              unit="from / item"
+              desc="Expert care for your delicate garments."
+              features={["Eco-friendly solvents", "Stain removal treatment", "Pressed and hung", "Special fabric handling"]}
+              popular
+            />
+            <PricingCard 
+              title="Monthly Subscription" 
+              price="$49.00" 
+              unit="per month"
+              desc="Set it and forget it. Ongoing laundry coverage."
+              features={["Up to 40 lbs of laundry", "2 free pickups a month", "24-hour guaranteed turnaround", "Dedicated support line"]}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* 6. TESTIMONIALS */}
+      <section className="py-24 bg-white dark:bg-slate-900 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
            <h2 className="text-4xl md:text-5xl font-bold text-[#14234b] dark:text-white mb-16">Happy Customers</h2>
            
@@ -310,6 +346,40 @@ function TestimonialCard({ name, text, imgId }: { name: string, text: string, im
         {[...Array(5)].map((_, i) => <Star key={i} size={14} fill="currentColor" />)}
       </div>
       <h4 className="font-bold text-[#14234b] dark:text-white">{name}</h4>
+    </div>
+  );
+}
+
+function PricingCard({ title, price, unit, desc, features, popular = false }: { title: string, price: string, unit: string, desc: string, features: string[], popular?: boolean }) {
+  return (
+    <div className={`p-8 rounded-3xl transition-transform duration-300 hover:-translate-y-2 relative border ${popular ? 'bg-[#14234b] dark:bg-blue-900 shadow-2xl shadow-blue-900/20 dark:shadow-none border-transparent' : 'bg-white dark:bg-slate-900 shadow-xl shadow-gray-100 dark:shadow-none border-gray-100 dark:border-slate-800'}`}>
+      {popular && (
+        <span className="absolute top-0 right-8 -translate-y-1/2 bg-[#FFB600] text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">Most Popular</span>
+      )}
+      <h3 className={`text-xl font-bold mb-2 ${popular ? 'text-white' : 'text-[#14234b] dark:text-white'}`}>{title}</h3>
+      <p className={`text-sm mb-6 ${popular ? 'text-slate-300 dark:text-blue-100' : 'text-[#59667a] dark:text-slate-400'}`}>{desc}</p>
+      
+      <div className="mb-6 pb-6 border-b border-opacity-20 border-white dark:border-slate-700">
+        <span className={`text-4xl md:text-5xl font-extrabold ${popular ? 'text-white' : 'text-[#14234b] dark:text-white'}`}>{price}</span>
+        <span className={`ml-2 text-sm font-semibold ${popular ? 'text-slate-300 dark:text-blue-200' : 'text-[#6C89EC] dark:text-blue-400'}`}>{unit}</span>
+      </div>
+      
+      <ul className="space-y-4 mb-8">
+        {features.map((feature, i) => (
+          <li key={i} className="flex items-start gap-3">
+            <CheckCircle2 size={20} className={`shrink-0 ${popular ? 'text-[#FFB600]' : 'text-[#6C89EC] dark:text-blue-400'}`} />
+            <span className={`text-sm ${popular ? 'text-white' : 'text-[#59667a] dark:text-slate-300'}`}>{feature}</span>
+          </li>
+        ))}
+      </ul>
+      
+      <Link href="/services" className={`block w-full py-4 text-center rounded-full font-bold transition-all ${
+        popular 
+          ? 'bg-[#FFB600] hover:bg-yellow-400 text-[#14234b] shadow-[0_0_15px_rgba(255,182,0,0.3)]' 
+          : 'bg-[#F3F6FA] dark:bg-slate-800 hover:bg-[#6C89EC] dark:hover:bg-blue-600 text-[#14234b] dark:text-white hover:text-white'
+      }`}>
+        Choose Plan
+      </Link>
     </div>
   );
 }
