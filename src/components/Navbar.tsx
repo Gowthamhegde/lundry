@@ -19,7 +19,10 @@ export default function Navbar() {
   const navs = [
     { name: 'Home', path: '/' },
     { name: 'Services', path: '/services' },
-    { name: 'Admin', path: '/admin' }
+    { name: 'About', path: '/about' },
+    { name: 'Pricelist', path: '/pricelist' },
+    { name: 'Contact', path: '/contact' },
+    { name: 'Login', path: '/login' }
   ];
 
   return (
