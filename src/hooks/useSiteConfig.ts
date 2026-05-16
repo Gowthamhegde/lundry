@@ -3,16 +3,24 @@
 import { useState, useEffect } from "react";
 import { SiteConfig, defaultSiteConfig } from "@/lib/config";
 
+function readStoredConfig() {
+  try {
+    const stored = localStorage.getItem("site_config");
+    return stored ? ({ ...defaultSiteConfig, ...JSON.parse(stored) } as SiteConfig) : defaultSiteConfig;
+  } catch {
+    return defaultSiteConfig;
+  }
+}
+
 export function useSiteConfig() {
   const [config, setConfig] = useState<SiteConfig>(defaultSiteConfig);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem("site_config");
-    if (stored) {
-      setConfig(JSON.parse(stored));
-    }
-    setIsLoaded(true);
+    queueMicrotask(() => {
+      setConfig(readStoredConfig());
+      setIsLoaded(true);
+    });
   }, []);
 
   const saveConfig = (newConfig: SiteConfig) => {

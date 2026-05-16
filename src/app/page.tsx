@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { useTheme } from "next-themes";
+import Link from "next/link";
+import { useThemeToggle } from "@/hooks/useThemeToggle";
 import {
   ArrowDown,
   ArrowUp,
@@ -23,7 +24,6 @@ import {
   Phone,
   Shirt,
   Sparkles,
-  Star,
   Sun,
   Truck,
   User,
@@ -57,17 +57,6 @@ const pricing = {
   ],
 };
 
-const testimonials = [
-  { name: "Ari K.", initials: "AK", quote: "My black tees came back soft, sharp, and not faded. Finally.", rating: 5 },
-  { name: "Maya S.", initials: "MS", quote: "The pickup flow feels like ordering coffee. Two taps and done.", rating: 5 },
-  { name: "Dev R.", initials: "DR", quote: "Suits looked editorial. The delivery was exactly on the minute.", rating: 5 },
-  { name: "Noor P.", initials: "NP", quote: "Obsessed with the premium wash. Everything smells expensive.", rating: 5 },
-  { name: "Leo V.", initials: "LV", quote: "Shoe cleaning revived a pair I had already written off.", rating: 5 },
-  { name: "Isha T.", initials: "IT", quote: "Zero chaos, zero calls, just clean clothes at the door.", rating: 5 },
-];
-
-
-
 const steps = [
   { title: "Schedule", desc: "Pick a slot that fits your actual life.", icon: Calendar },
   { title: "Pickup", desc: "We collect from your door with live updates.", icon: Truck },
@@ -98,7 +87,7 @@ export default function Home() {
   const [planMode, setPlanMode] = useState<PlanMode>("item");
   const [submitState, setSubmitState] = useState<"idle" | "loading" | "success">("idle");
   const cursorRef = useRef<HTMLDivElement>(null);
-  const { resolvedTheme, setTheme } = useTheme();
+  const toggleTheme = useThemeToggle();
 
   const selectedTotal = useMemo(
     () => services.filter((service) => selectedServices.includes(service.id)).reduce((sum, service) => sum + service.price, 0),
@@ -197,15 +186,16 @@ export default function Home() {
         <div className="nav-links">
           <a href="#services">Services</a>
           <a href="#pricing">Pricing</a>
-          <a href="#booking">Book</a>
+          <Link href="/order">Book</Link>
         </div>
         <button
           className="theme-toggle"
           type="button"
           aria-label="Toggle light mode"
-          onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+          onClick={toggleTheme}
         >
-          {resolvedTheme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          <Sun size={18} className="theme-icon theme-icon-sun" />
+          <Moon size={18} className="theme-icon theme-icon-moon" />
         </button>
       </nav>
 
@@ -224,7 +214,7 @@ export default function Home() {
             Premium pickup, wash, fold, press, and delivery with a clean app flow and no beige waiting-room energy.
           </p>
           <div className="hero-actions">
-            <a href="#booking" className="shimmer-btn">Book a pickup <ChevronRight size={18} /></a>
+            <Link href="/order" className="shimmer-btn">Book a pickup <ChevronRight size={18} /></Link>
             <a href="#services" className="ghost-btn">Build my order</a>
           </div>
         </div>
@@ -279,7 +269,7 @@ export default function Home() {
         <div className={`live-summary ${selectedServices.length ? "visible" : ""}`}>
           <span>{selectedServices.length || "No"} selected</span>
           <strong>{selectedLabels.join(" + ") || "Choose a service"}</strong>
-          <a href="#booking">Order from ₹{selectedTotal}<ChevronRight size={16} /></a>
+          <Link href="/order">Order from ₹{selectedTotal}<ChevronRight size={16} /></Link>
         </div>
       </section>
 
@@ -326,7 +316,7 @@ export default function Home() {
                   <li key={feature}><CheckCircle2 size={17} />{feature}</li>
                 ))}
               </ul>
-              <a href="#booking" className="plan-cta">Choose {plan.name}</a>
+              <Link href="/order" className="plan-cta">Choose {plan.name}</Link>
             </article>
           ))}
         </div>
@@ -405,7 +395,7 @@ export default function Home() {
           <a href="#services">Services</a>
           <a href="#process">Process</a>
           <a href="#pricing">Pricing</a>
-          <a href="#booking">Booking</a>
+          <Link href="/order">Booking</Link>
         </div>
         <div className="socials" aria-label="Social links">
           <a href="#" aria-label="Instagram"><Sparkles size={19} /></a>

@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { motion } from 'framer-motion';
+import { useMemo, useState, type SVGProps } from "react";
+import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { CheckCircle2, ChevronRight, PackageCheck, Sparkles } from "lucide-react";
 import { useServices } from "@/hooks/useServices";
 
 function Icon({ name, className }: { name: string; className?: string }) {
-  const common = { width: 44, height: 44, viewBox: "0 0 24 24", fill: "none", strokeWidth: 1.5 } as any;
+  const common: SVGProps<SVGSVGElement> = { width: 44, height: 44, viewBox: "0 0 24 24", fill: "none", strokeWidth: 1.5 };
   const stroke = "currentColor";
+
   switch (name) {
     case "iron":
       return (
@@ -75,89 +77,120 @@ function Icon({ name, className }: { name: string; className?: string }) {
 export default function ServicesPage() {
   const { services } = useServices();
   const [selected, setSelected] = useState<string[]>([]);
-
-  const toggle = (id: string) => {
-    setSelected(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
-  };
-
-  const selectedServices = useMemo(() => services.filter(s => selected.includes(s.id)), [services, selected]);
-
   const router = useRouter();
 
+  const selectedServices = useMemo(() => services.filter((service) => selected.includes(service.id)), [services, selected]);
+
+  const toggle = (id: string) => {
+    setSelected((current) => (current.includes(id) ? current.filter((serviceId) => serviceId !== id) : [...current, id]));
+  };
+
   const handleContinue = () => {
-    const names = selectedServices.map(s => s.name);
-    // persist selection to sessionStorage then navigate to checkout/address form
     try {
       sessionStorage.setItem("selected_services", JSON.stringify(selectedServices));
-    } catch (e) {
-      console.warn("Could not persist selected services", e);
+    } catch (error) {
+      console.warn("Could not persist selected services", error);
     }
-    router.push("/checkout");
+
+    router.push("/order");
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12">
-      <header className="mb-6 text-center">
-        <h1 className="text-2xl font-semibold text-[22px]">Choose your service</h1>
-        <p className="text-[12px] text-gray-500 mt-1">Select one or more services for your laundry order</p>
-      </header>
-
-      <section className="service-grid">
-        {services.map((service, idx) => {
-          const isSelected = selected.includes(service.id);
-          return (
-            <motion.article
-              key={service.id}
-              onClick={() => toggle(service.id)}
-              role="button"
-              aria-pressed={isSelected}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.06, duration: 0.45 }}
-              whileHover={{ scale: 1.02 }}
-              className={`service-card p-4 relative cursor-pointer transition-transform duration-150` + (isSelected ? " selected" : "")}
-            >
-              <div className="flex items-start justify-between">
-                <div className={`${isSelected ? "text-[var(--accent)]" : "text-current"}`}>
-                  <Icon name={service.icon || ""} className={`text-[22px] ${isSelected ? "text-[var(--accent)]" : "text-current"}`} />
-                </div>
-                <div className="absolute top-3 right-3">
-                  <div className={`w-6 h-6 rounded-full border ${isSelected ? "bg-[var(--accent)] border-[var(--accent)]" : "bg-white border-gray-300"} flex items-center justify-center`}>
-                    {isSelected ? (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                    ) : (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2"><circle cx="12" cy="12" r="5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {service.badge && (
-                <div className="absolute left-4 top-3 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-md">{service.badge}</div>
-              )}
-
-              <h3 className="mt-6 text-[15px] font-medium text-[var(--color-text-primary)]">{service.name}</h3>
-              <p className="text-[12px] text-[var(--color-text-muted)] leading-[18px] mt-2">{service.description}</p>
-
-              <div className="mt-4 flex items-center justify-between">
-                <span className={`price-pill ${isSelected ? 'selected' : ''}`}>₹{service.price}{service.category ? ` / ${service.category.replace('Per ', '')}` : ''}</span>
-              </div>
-            </motion.article>
-          );
-        })}
-      </section>
-
-      <div className="fixed bottom-4 left-0 right-0 flex justify-center">
-        <div className="w-full max-w-6xl bg-[var(--color-background-secondary)] rounded-xl px-6 py-3 flex items-center justify-between shadow-sm">
-          <div className="text-sm text-[var(--color-text-muted)]">
-            {selected.length === 0 ? 'No services selected' : selectedServices.map(s => s.name).join(', ')}
+    <div className="studio-page pb-28">
+      <div className="studio-shell">
+        <header className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-end">
+          <div>
+            <p className="studio-kicker">
+              <Sparkles className="h-4 w-4" />
+              Laundry menu
+            </p>
+            <h1 className="studio-title">Pick your care stack</h1>
+            <p className="studio-copy">
+              Build the exact order you need. Select multiple services, review the running summary, and continue straight into pickup details.
+            </p>
           </div>
-          <button
-            onClick={handleContinue}
-            disabled={selected.length === 0}
-            className={`ml-4 rounded-md px-4 py-2 font-medium text-white ${selected.length === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-[var(--accent)] hover:bg-[#144a80]'}`}
-          >
-            Continue
+          <div className="studio-panel p-5">
+            <div className="flex items-center gap-3">
+              <span className="grid h-12 w-12 place-items-center rounded-lg bg-teal-500/12 text-teal-600 dark:text-teal-300">
+                <PackageCheck className="h-6 w-6" />
+              </span>
+              <div>
+                <p className="text-sm font-black text-[var(--color-text-primary)]">{selected.length || "No"} selected</p>
+                <p className="text-sm text-[var(--color-text-muted)]">
+                  {selected.length ? selectedServices.map((service) => service.name).join(" + ") : "Start with wash, press, or specialty care."}
+                </p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <section className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {services.map((service, index) => {
+            const isSelected = selected.includes(service.id);
+
+            return (
+              <motion.button
+                key={service.id}
+                type="button"
+                onClick={() => toggle(service.id)}
+                aria-pressed={isSelected}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.42 }}
+                whileHover={{ y: -6 }}
+                className={`group min-h-60 rounded-lg border p-5 text-left transition ${
+                  isSelected
+                    ? "border-teal-400 bg-teal-50/90 text-slate-950 shadow-[0_22px_70px_rgba(20,184,166,0.18)] dark:bg-teal-500/12 dark:text-white"
+                    : "border-slate-200/70 bg-white/72 hover:border-teal-300 dark:border-slate-800 dark:bg-slate-900/72"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <span
+                    className={`grid h-14 w-14 place-items-center rounded-lg transition ${
+                      isSelected
+                        ? "bg-teal-500 text-white"
+                        : "bg-slate-100 text-teal-700 group-hover:bg-teal-500 group-hover:text-white dark:bg-slate-800 dark:text-teal-300"
+                    }`}
+                  >
+                    <Icon name={service.icon || ""} className="h-8 w-8" />
+                  </span>
+                  {isSelected ? <CheckCircle2 className="h-6 w-6 shrink-0 text-teal-600 dark:text-teal-300" /> : null}
+                </div>
+
+                {service.badge ? <span className="mt-5 inline-flex rounded-full bg-lime-300 px-2.5 py-1 text-xs font-black text-slate-950">{service.badge}</span> : null}
+
+                <h3 className="mt-6 text-2xl font-black leading-none tracking-tight text-[var(--color-text-primary)]">{service.name}</h3>
+                <p className="mt-3 text-sm leading-6 text-[var(--color-text-muted)]">{service.description}</p>
+
+                <div className="mt-6 flex items-center justify-between gap-3">
+                  <span
+                    className={`rounded-full px-3 py-1.5 text-sm font-black ${
+                      isSelected ? "bg-teal-500 text-white" : "bg-blue-500/10 text-blue-700 dark:text-blue-300"
+                    }`}
+                  >
+                    Rs. {service.price}
+                    {service.category ? ` / ${service.category.replace("Per ", "")}` : ""}
+                  </span>
+                  <span className="text-xs font-black uppercase text-[var(--color-text-muted)]">{isSelected ? "Added" : "Tap"}</span>
+                </div>
+              </motion.button>
+            );
+          })}
+        </section>
+      </div>
+
+      <div className="fixed bottom-4 left-0 right-0 z-40 flex justify-center px-4">
+        <div className="studio-panel flex w-full max-w-5xl flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-black text-[var(--color-text-primary)]">
+              {selected.length === 0 ? "No services selected" : `${selected.length} service stack ready`}
+            </p>
+            <p className="mt-1 max-w-2xl truncate text-sm text-[var(--color-text-muted)]">
+              {selected.length === 0 ? "Choose a service to continue." : selectedServices.map((service) => service.name).join(", ")}
+            </p>
+          </div>
+          <button onClick={handleContinue} disabled={selected.length === 0} className="studio-button shrink-0 disabled:bg-gray-400">
+            Continue <ChevronRight className="h-5 w-5" />
           </button>
         </div>
       </div>

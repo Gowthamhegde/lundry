@@ -1,40 +1,65 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useServices, Service } from "@/hooks/useServices";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import {
+  BarChart3,
+  Edit2,
+  Lock,
+  LogOut,
+  Plus,
+  Save,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
+import { type Service, useServices } from "@/hooks/useServices";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
-import { Plus, Edit2, Trash2, Lock, Settings } from "lucide-react";
+
+type AdminTab = "services" | "site";
+type ServiceForm = Omit<Service, "id">;
+
+const emptyService: ServiceForm = {
+  name: "",
+  description: "",
+  price: 0,
+  category: "Wash",
+  icon: "washing",
+};
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginId, setLoginId] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
-  const [activeTab, setActiveTab] = useState('services');
+  const [activeTab, setActiveTab] = useState<AdminTab>("services");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState<ServiceForm>(emptyService);
+  const [savedMessage, setSavedMessage] = useState("");
 
   const { services, addService, updateService, deleteService } = useServices();
   const { config, saveConfig } = useSiteConfig();
-  
   const [siteForm, setSiteForm] = useState(config);
 
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: '', description: '', price: 0, category: 'Wash' });
-
   useEffect(() => {
-    const auth = sessionStorage.getItem("admin_auth");
-    if (auth === "true") setIsAuthenticated(true);
-    setSiteForm(config);
+    queueMicrotask(() => {
+      setIsAuthenticated(sessionStorage.getItem("admin_auth") === "true");
+      setSiteForm(config);
+    });
   }, [config]);
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
+  const totalValue = useMemo(() => services.reduce((sum, service) => sum + service.price, 0), [services]);
+
+  const handleLogin = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     if (loginId === "admin" && loginPassword === "admin123") {
       setIsAuthenticated(true);
       sessionStorage.setItem("admin_auth", "true");
       setLoginError("");
-    } else {
-      setLoginError("Invalid ID or Password");
+      return;
     }
+
+    setLoginError("Invalid ID or password");
   };
 
   const handleLogout = () => {
@@ -43,186 +68,250 @@ export default function AdminPage() {
   };
 
   const handleSave = () => {
+    if (!formData.name.trim() || !formData.description.trim()) return;
+
     if (editingId) {
       updateService(editingId, formData);
       setEditingId(null);
+      setSavedMessage("Service updated");
     } else {
       addService(formData);
+      setSavedMessage("Service added");
     }
-    setFormData({ name: '', description: '', price: 0, category: 'Wash' });
+
+    setFormData(emptyService);
   };
 
-  const handleEdit = (srv: Service) => {
-    setEditingId(srv.id);
-    setFormData({ name: srv.name, description: srv.description, price: srv.price, category: srv.category });
+  const handleEdit = (service: Service) => {
+    setEditingId(service.id);
+    setFormData({
+      name: service.name,
+      description: service.description,
+      price: service.price,
+      category: service.category,
+      icon: service.icon || "washing",
+      badge: service.badge,
+    });
+    setActiveTab("services");
   };
 
   const handleSaveSiteConfig = () => {
     saveConfig(siteForm);
-    alert("Site configuration saved!");
+    setSavedMessage("Site configuration saved");
   };
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 max-w-md w-full">
-          <div className="flex justify-center mb-6">
-            <div className="bg-teal-100 p-4 rounded-full">
-              <Lock className="h-8 w-8 text-teal-600" />
-            </div>
-          </div>
-          <h1 className="text-2xl font-bold text-center text-gray-900 mb-6">Admin Login</h1>
-          <form onSubmit={handleLogin} className="space-y-4">
-            {loginError && <p className="text-red-500 text-sm text-center font-medium bg-red-50 p-2 rounded-lg">{loginError}</p>}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Admin ID</label>
-              <input 
-                type="text" 
-                value={loginId} 
-                onChange={(e) => setLoginId(e.target.value)} 
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500" 
-                placeholder="Enter admin ID"
-                required 
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <input 
-                type="password" 
-                value={loginPassword} 
-                onChange={(e) => setLoginPassword(e.target.value)} 
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500" 
-                placeholder="Enter password"
-                required 
-              />
-            </div>
-            <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all mt-4">
-              Access Dashboard
-            </button>
-          </form>
+      <div className="studio-page">
+        <div className="studio-shell grid min-h-[calc(100vh-9rem)] place-items-center">
+          <section className="studio-panel w-full max-w-md p-6 sm:p-8">
+            <span className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-lg bg-teal-500/12 text-teal-500">
+              <Lock className="h-8 w-8" />
+            </span>
+            <p className="studio-kicker mx-auto w-fit">
+              <ShieldCheck className="h-4 w-4" />
+              Staff only
+            </p>
+            <h1 className="mt-5 text-center text-3xl font-black text-[var(--color-text-primary)]">Admin login</h1>
+            <p className="mt-2 text-center text-sm text-[var(--color-text-muted)]">Use the demo admin credentials to manage services and site copy.</p>
+
+            <form onSubmit={handleLogin} className="mt-7 space-y-4">
+              {loginError ? <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-center text-sm font-bold text-red-700">{loginError}</p> : null}
+              <label className="grid gap-2 text-sm font-bold text-[var(--color-text-primary)]">
+                Admin ID
+                <input value={loginId} onChange={(event) => setLoginId(event.target.value)} className="studio-input" placeholder="admin" required />
+              </label>
+              <label className="grid gap-2 text-sm font-bold text-[var(--color-text-primary)]">
+                Password
+                <input value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} type="password" className="studio-input" placeholder="admin123" required />
+              </label>
+              <button type="submit" className="studio-button w-full">
+                Access dashboard
+              </button>
+            </form>
+          </section>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full flex flex-col md:flex-row gap-8">
-      
-      {/* Sidebar sidebar options */}
-      <div className="md:w-64 flex-shrink-0">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Settings</h1>
-        <div className="space-y-2">
-          <button 
-            onClick={() => setActiveTab('services')}
-            className={`w-full text-left px-4 py-3 rounded-xl font-medium transition-all ${activeTab === 'services' ? 'bg-teal-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
-          >
-            Manage Services
-          </button>
-          <button 
-            onClick={() => setActiveTab('site')}
-            className={`w-full text-left px-4 py-3 rounded-xl font-medium transition-all ${activeTab === 'site' ? 'bg-teal-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
-          >
-            Site Configuration
-          </button>
-        </div>
-        <button onClick={handleLogout} className="mt-8 w-full text-sm font-semibold text-red-600 bg-red-50 px-4 py-3 rounded-xl hover:bg-red-100 transition-colors">
-          Logout
-        </button>
-      </div>
-
-      <div className="flex-1">
-        {activeTab === 'services' && (
+    <div className="studio-page">
+      <div className="studio-shell">
+        <header className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
           <div>
-            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">{editingId ? 'Edit Service' : 'Add New Service'}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Service Name</label>
-                  <input type="text" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                  <select className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
-                    <option>Wash</option><option>Iron</option><option>Dry Clean</option><option>Repair</option>
-                  </select>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                  <input type="text" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Price ($)</label>
-                  <input type="number" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500" value={formData.price} onChange={e => setFormData({...formData, price: parseFloat(e.target.value) || 0})} />
-                </div>
-              </div>
-              <button onClick={handleSave} className="bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2">
-                {editingId ? <Edit2 className="h-4 w-4" /> : <Plus className="h-4 w-4" />} {editingId ? 'Update Service' : 'Add Service'}
-              </button>
-            </div>
-
-            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50/50">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Service</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
-                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {services.map(srv => (
-                    <tr key={srv.id} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-bold text-gray-900">{srv.name}</div>
-                        <div className="text-sm text-gray-500">{srv.description}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap"><span className="px-3 py-1 inline-flex text-xs font-semibold rounded-full bg-gray-100 text-gray-600">{srv.category}</span></td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${srv.price.toFixed(2)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
-                        <button onClick={() => handleEdit(srv)} className="text-teal-600 hover:text-teal-900">Edit</button>
-                        <button onClick={() => deleteService(srv.id)} className="text-red-600 hover:text-red-900">Delete</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <p className="studio-kicker">
+              <Sparkles className="h-4 w-4" />
+              Operator dashboard
+            </p>
+            <h1 className="studio-title">Control room</h1>
+            <p className="studio-copy">Tune the customer-facing menu, update brand copy, and keep the laundry catalog feeling current.</p>
           </div>
-        )}
+          <button onClick={handleLogout} className="studio-secondary-button">
+            <LogOut className="h-5 w-5" />
+            Logout
+          </button>
+        </header>
 
-        {activeTab === 'site' && (
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2"><Settings className="h-5 w-5" /> Main Configuration</h2>
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Company Name (Navbar & Footer)</label>
-                <input type="text" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500" value={siteForm.companyName} onChange={e => setSiteForm({...siteForm, companyName: e.target.value})} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Hero Title (Homepage)</label>
-                <input type="text" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500" value={siteForm.heroTitle} onChange={e => setSiteForm({...siteForm, heroTitle: e.target.value})} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Hero Subtitle</label>
-                <textarea className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500" rows={3} value={siteForm.heroSubtitle} onChange={e => setSiteForm({...siteForm, heroSubtitle: e.target.value})} />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Contact Email</label>
-                  <input type="email" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500" value={siteForm.contactEmail} onChange={e => setSiteForm({...siteForm, contactEmail: e.target.value})} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Contact Phone</label>
-                  <input type="text" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500" value={siteForm.contactPhone} onChange={e => setSiteForm({...siteForm, contactPhone: e.target.value})} />
-                </div>
-              </div>
-              <button onClick={handleSaveSiteConfig} className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-md mt-4">
-                Save Application Config
-              </button>
-            </div>
+        <section className="mt-10 grid gap-4 md:grid-cols-3">
+          <div className="studio-panel p-5">
+            <p className="text-sm font-bold text-[var(--color-text-muted)]">Active services</p>
+            <p className="mt-2 text-4xl font-black text-[var(--color-text-primary)]">{services.length}</p>
           </div>
-        )}
+          <div className="studio-panel p-5">
+            <p className="text-sm font-bold text-[var(--color-text-muted)]">Catalog value</p>
+            <p className="mt-2 text-4xl font-black text-teal-700 dark:text-teal-300">Rs. {totalValue}</p>
+          </div>
+          <div className="studio-panel p-5">
+            <p className="text-sm font-bold text-[var(--color-text-muted)]">Brand</p>
+            <p className="mt-2 text-4xl font-black text-[var(--color-text-primary)]">{siteForm.companyName || "FreshWash"}</p>
+          </div>
+        </section>
+
+        <div className="mt-8 grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
+          <aside className="studio-panel h-fit p-3">
+            {[
+              { id: "services" as const, label: "Manage services", icon: BarChart3 },
+              { id: "site" as const, label: "Site configuration", icon: Settings },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const active = activeTab === tab.id;
+
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex min-h-12 w-full items-center gap-3 rounded-lg px-4 text-left text-sm font-black transition ${
+                    active ? "bg-teal-500 text-white shadow-lg shadow-teal-500/20" : "text-[var(--color-text-muted)] hover:bg-teal-500/10 hover:text-[var(--color-text-primary)]"
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </aside>
+
+          <main className="space-y-6">
+            {savedMessage ? <p className="studio-panel p-4 text-sm font-black text-teal-700 dark:text-teal-300">{savedMessage}</p> : null}
+
+            {activeTab === "services" ? (
+              <>
+                <section className="studio-panel p-5 sm:p-6">
+                  <h2 className="mb-5 text-xl font-black text-[var(--color-text-primary)]">{editingId ? "Edit service" : "Add service"}</h2>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <label className="grid gap-2 text-sm font-bold text-[var(--color-text-primary)]">
+                      Service name
+                      <input value={formData.name} onChange={(event) => setFormData({ ...formData, name: event.target.value })} className="studio-input" />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-[var(--color-text-primary)]">
+                      Category
+                      <select value={formData.category} onChange={(event) => setFormData({ ...formData, category: event.target.value })} className="studio-input">
+                        <option>Wash</option>
+                        <option>Iron</option>
+                        <option>Dry Clean</option>
+                        <option>Repair</option>
+                        <option>Per kg</option>
+                        <option>Per piece</option>
+                      </select>
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-[var(--color-text-primary)] md:col-span-2">
+                      Description
+                      <input value={formData.description} onChange={(event) => setFormData({ ...formData, description: event.target.value })} className="studio-input" />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-[var(--color-text-primary)]">
+                      Price
+                      <input value={formData.price} onChange={(event) => setFormData({ ...formData, price: Number(event.target.value) || 0 })} type="number" className="studio-input" />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-[var(--color-text-primary)]">
+                      Badge
+                      <input value={formData.badge || ""} onChange={(event) => setFormData({ ...formData, badge: event.target.value || undefined })} className="studio-input" placeholder="Popular" />
+                    </label>
+                  </div>
+                  <button onClick={handleSave} className="studio-button mt-5">
+                    {editingId ? <Edit2 className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+                    {editingId ? "Update service" : "Add service"}
+                  </button>
+                </section>
+
+                <section className="studio-panel overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
+                      <thead>
+                        <tr className="text-left text-xs font-black uppercase text-[var(--color-text-muted)]">
+                          <th className="px-5 py-4">Service</th>
+                          <th className="px-5 py-4">Category</th>
+                          <th className="px-5 py-4">Price</th>
+                          <th className="px-5 py-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                        {services.map((service) => (
+                          <tr key={service.id} className="transition hover:bg-teal-500/5">
+                            <td className="px-5 py-4">
+                              <p className="font-black text-[var(--color-text-primary)]">{service.name}</p>
+                              <p className="mt-1 text-[var(--color-text-muted)]">{service.description}</p>
+                            </td>
+                            <td className="px-5 py-4">
+                              <span className="rounded-full bg-blue-500/10 px-3 py-1 font-black text-blue-700 dark:text-blue-300">{service.category}</span>
+                            </td>
+                            <td className="px-5 py-4 font-black text-[var(--color-text-primary)]">Rs. {service.price}</td>
+                            <td className="px-5 py-4">
+                              <div className="flex justify-end gap-2">
+                                <button onClick={() => handleEdit(service)} className="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 text-teal-600 hover:bg-teal-500/10 dark:border-slate-800" aria-label={`Edit ${service.name}`}>
+                                  <Edit2 className="h-4 w-4" />
+                                </button>
+                                <button onClick={() => deleteService(service.id)} className="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 text-red-600 hover:bg-red-500/10 dark:border-slate-800" aria-label={`Delete ${service.name}`}>
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              </>
+            ) : (
+              <section className="studio-panel p-5 sm:p-6">
+                <h2 className="mb-5 flex items-center gap-2 text-xl font-black text-[var(--color-text-primary)]">
+                  <Settings className="h-5 w-5 text-teal-500" />
+                  Main configuration
+                </h2>
+                <div className="grid gap-4">
+                  <label className="grid gap-2 text-sm font-bold text-[var(--color-text-primary)]">
+                    Company name
+                    <input value={siteForm.companyName} onChange={(event) => setSiteForm({ ...siteForm, companyName: event.target.value })} className="studio-input" />
+                  </label>
+                  <label className="grid gap-2 text-sm font-bold text-[var(--color-text-primary)]">
+                    Hero title
+                    <input value={siteForm.heroTitle} onChange={(event) => setSiteForm({ ...siteForm, heroTitle: event.target.value })} className="studio-input" />
+                  </label>
+                  <label className="grid gap-2 text-sm font-bold text-[var(--color-text-primary)]">
+                    Hero subtitle
+                    <textarea value={siteForm.heroSubtitle} onChange={(event) => setSiteForm({ ...siteForm, heroSubtitle: event.target.value })} className="studio-input min-h-28 py-3" />
+                  </label>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <label className="grid gap-2 text-sm font-bold text-[var(--color-text-primary)]">
+                      Contact email
+                      <input value={siteForm.contactEmail} onChange={(event) => setSiteForm({ ...siteForm, contactEmail: event.target.value })} type="email" className="studio-input" />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-[var(--color-text-primary)]">
+                      Contact phone
+                      <input value={siteForm.contactPhone} onChange={(event) => setSiteForm({ ...siteForm, contactPhone: event.target.value })} className="studio-input" />
+                    </label>
+                  </div>
+                </div>
+                <button onClick={handleSaveSiteConfig} className="studio-button mt-5">
+                  <Save className="h-5 w-5" />
+                  Save application config
+                </button>
+              </section>
+            )}
+          </main>
+        </div>
       </div>
     </div>
   );

@@ -23,37 +23,47 @@ const defaultServices: Service[] = [
   { id: "carpet-blanket", name: "Carpet / blanket", description: "Large-item cleaning for carpets and blankets.", price: 149, category: "Per piece", icon: "layout-grid" },
 ];
 
+function isService(value: unknown): value is Service {
+  if (typeof value !== "object" || value === null) return false;
+
+  const service = value as Partial<Service>;
+  return (
+    typeof service.id === "string" &&
+    typeof service.name === "string" &&
+    typeof service.description === "string" &&
+    typeof service.price === "number" &&
+    typeof service.category === "string"
+  );
+}
+
+function readStoredServices() {
+  try {
+    const stored = localStorage.getItem("laundry_services");
+    const parsed: unknown = stored ? JSON.parse(stored) : null;
+
+    if (Array.isArray(parsed) && parsed.every(isService)) {
+      const storedIds = new Set(parsed.map((service) => service.id));
+      const defaultIds = new Set(defaultServices.map((service) => service.id));
+      const sameCount = parsed.length === defaultServices.length;
+      const allDefaultsPresent = [...defaultIds].every((id) => storedIds.has(id));
+
+      if (sameCount && allDefaultsPresent) {
+        return parsed;
+      }
+    }
+  } catch {
+    return defaultServices;
+  }
+
+  localStorage.setItem("laundry_services", JSON.stringify(defaultServices));
+  return defaultServices;
+}
+
 export function useServices() {
-  const [services, setServices] = useState<Service[]>([]);
+  const [services, setServices] = useState<Service[]>(defaultServices);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("laundry_services");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          const storedIds = new Set(parsed.map((s: any) => s.id));
-          const defaultIds = new Set(defaultServices.map(s => s.id));
-          const sameCount = parsed.length === defaultServices.length;
-          const allDefaultsPresent = [...defaultIds].every(id => storedIds.has(id));
-          if (sameCount && allDefaultsPresent) {
-            setServices(parsed);
-          } else {
-            setServices(defaultServices);
-            localStorage.setItem("laundry_services", JSON.stringify(defaultServices));
-          }
-        } else {
-          setServices(defaultServices);
-          localStorage.setItem("laundry_services", JSON.stringify(defaultServices));
-        }
-      } else {
-        setServices(defaultServices);
-        localStorage.setItem("laundry_services", JSON.stringify(defaultServices));
-      }
-    } catch (err) {
-      setServices(defaultServices);
-      localStorage.setItem("laundry_services", JSON.stringify(defaultServices));
-    }
+    queueMicrotask(() => setServices(readStoredServices()));
   }, []);
 
   const saveServices = (newServices: Service[]) => {

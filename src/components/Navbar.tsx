@@ -1,14 +1,14 @@
 "use client";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Shirt, Moon, Sun } from 'lucide-react';
+import { Moon, Shirt, Sun } from 'lucide-react';
 import { useSiteConfig } from '@/hooks/useSiteConfig';
-import { useTheme } from 'next-themes';
+import { useThemeToggle } from '@/hooks/useThemeToggle';
 
 export default function Navbar() {
   const pathname = usePathname();
   const { config } = useSiteConfig();
-  const { theme, setTheme } = useTheme();
+  const toggleTheme = useThemeToggle();
 
   if (pathname === '/') {
     return null;
@@ -17,10 +17,9 @@ export default function Navbar() {
   const navs = [
     { name: 'Home', path: '/' },
     { name: 'Services', path: '/services' },
-    { name: 'About', path: '/about' },
-    { name: 'Pricelist', path: '/pricelist' },
-    { name: 'Contact', path: '/contact' },
-    { name: 'Login', path: '/login' }
+    { name: 'Order', path: '/order' },
+    { name: 'Login', path: '/login' },
+    { name: 'Admin', path: '/admin' }
   ];
 
   return (
@@ -28,14 +27,14 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Logo Section */}
-          <div className="flex items-center gap-3 group cursor-pointer">
+          <Link href="/" className="flex items-center gap-3 group">
             <div className="bg-gradient-to-br from-teal-500 to-emerald-600 p-2.5 rounded-2xl shadow-lg shadow-teal-500/30 group-hover:shadow-teal-500/50 transition-all duration-300 group-hover:scale-105">
               <Shirt className="h-6 w-6 text-white" />
             </div>
             <span className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-emerald-600 dark:from-teal-400 dark:to-emerald-400 tracking-tight">
               {config.companyName || "FreshWash"}
             </span>
-          </div>
+          </Link>
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-1">
@@ -60,15 +59,16 @@ export default function Navbar() {
           {/* Actions: Theme Toggle & CTA */}
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              onClick={toggleTheme}
               className="p-2.5 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
               aria-label="Toggle Dark Mode"
             >
-              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              <Sun className="theme-icon theme-icon-sun h-5 w-5" />
+              <Moon className="theme-icon theme-icon-moon h-5 w-5" />
             </button>
-            <button className="bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white px-6 py-2.5 rounded-full font-bold text-sm transition-all duration-300 shadow-[0_0_20px_rgba(20,184,166,0.3)] hover:shadow-[0_0_25px_rgba(20,184,166,0.5)] hover:-translate-y-0.5">
+            <Link href="/order" className="bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white px-6 py-2.5 rounded-full font-bold text-sm transition-all duration-300 shadow-[0_0_20px_rgba(20,184,166,0.3)] hover:shadow-[0_0_25px_rgba(20,184,166,0.5)] hover:-translate-y-0.5">
               Book Now
-            </button>
+            </Link>
           </div>
         </div>
       </div>

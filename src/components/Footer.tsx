@@ -35,6 +35,8 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li><Link href="/" className="hover:text-teal-400 transition-colors">Home</Link></li>
               <li><Link href="/services" className="hover:text-teal-400 transition-colors">Services</Link></li>
+              <li><Link href="/order" className="hover:text-teal-400 transition-colors">Order</Link></li>
+              <li><Link href="/login" className="hover:text-teal-400 transition-colors">Login</Link></li>
               <li><Link href="/admin" className="hover:text-teal-400 transition-colors">Admin Login</Link></li>
             </ul>
           </div>
@@ -61,8 +63,8 @@ export default function Footer() {
         <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
           <p>&copy; {new Date().getFullYear()} {config.companyName}. All rights reserved.</p>
           <div className="flex gap-4 mt-4 md:mt-0">
-            <span className="hover:text-white cursor-pointer">Privacy Policy</span>
-            <span className="hover:text-white cursor-pointer">Terms of Service</span>
+            <Link href="/services" className="hover:text-white">Service Menu</Link>
+            <Link href="/order" className="hover:text-white">Book Pickup</Link>
           </div>
         </div>
       </div>

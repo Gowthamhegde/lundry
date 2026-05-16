@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  <g fill="#e6f9f1">
+    <rect x="220" y="120" width="360" height="260" rx="20"/>
+  </g>
+  <text x="50%" y="30" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="28" fill="#0a6b3a">Shirt — After</text>
+  <text x="50%" y="460" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="16" fill="#666">Stains removed, color restored, pressed</text>
+</svg>

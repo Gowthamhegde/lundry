@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  <g fill="#fff6e6">
+    <rect x="150" y="100" width="500" height="300" rx="14"/>
+  </g>
+  <text x="50%" y="30" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="28" fill="#9a5a00">Blanket — After</text>
+  <text x="50%" y="460" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="16" fill="#666">Fluffed, softened, spot-treated</text>
+</svg>

@@ -78,6 +78,166 @@ html {
   color: white;
 }
 
+.studio-page {
+  position: relative;
+  min-height: calc(100vh - 4rem);
+  width: 100%;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(20, 184, 166, 0.1), transparent 32%),
+    linear-gradient(225deg, rgba(37, 99, 235, 0.14), transparent 34%),
+    var(--background);
+}
+
+.studio-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.36;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(180deg, #000, transparent 78%);
+}
+
+.studio-shell {
+  position: relative;
+  z-index: 1;
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 52px 0 72px;
+}
+
+.studio-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(20, 184, 166, 0.3);
+  border-radius: 999px;
+  color: #0f766e;
+  background: rgba(20, 184, 166, 0.1);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.dark .studio-kicker {
+  color: #5eead4;
+  background: rgba(20, 184, 166, 0.12);
+}
+
+.studio-title {
+  margin: 16px 0 0;
+  max-width: 850px;
+  color: var(--color-text-primary);
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(2.6rem, 7vw, 5.2rem);
+  font-weight: 800;
+  line-height: 0.94;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.studio-copy {
+  max-width: 680px;
+  margin-top: 18px;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.studio-panel {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 28px 90px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(18px);
+}
+
+.dark .studio-panel {
+  border-color: rgba(148, 163, 184, 0.16);
+  background: rgba(15, 23, 42, 0.72);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.28);
+}
+
+.studio-input {
+  min-height: 48px;
+  width: 100%;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.62);
+  padding: 0 14px;
+  color: var(--color-text-primary);
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.studio-input:focus {
+  border-color: #14b8a6;
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.14);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.dark .studio-input {
+  background: rgba(2, 6, 23, 0.42);
+}
+
+.dark .studio-input:focus {
+  background: rgba(2, 6, 23, 0.68);
+}
+
+.studio-button {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #0f766e, #2563eb);
+  padding: 0 22px;
+  color: white;
+  font-weight: 900;
+  box-shadow: 0 20px 54px rgba(37, 99, 235, 0.22);
+  transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+}
+
+.studio-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 24px 68px rgba(37, 99, 235, 0.3);
+}
+
+.studio-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+  transform: none;
+  box-shadow: none;
+}
+
+.studio-secondary-button {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 999px;
+  padding: 0 20px;
+  color: var(--color-text-primary);
+  font-weight: 900;
+  background: rgba(255, 255, 255, 0.42);
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.studio-secondary-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(20, 184, 166, 0.5);
+  background: rgba(20, 184, 166, 0.08);
+}
+
 /* Gen Z single-page laundry redesign */
 .genz-page {
   --bg: #0e0e0e;
@@ -262,6 +422,15 @@ html {
   border-radius: 999px;
   color: var(--text);
   background: var(--panel);
+}
+
+.theme-icon {
+  display: none;
+}
+
+.dark .theme-icon-sun,
+.light .theme-icon-moon {
+  display: block;
 }
 
 .theme-toggle:active,
