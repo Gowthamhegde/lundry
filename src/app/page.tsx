@@ -66,6 +66,8 @@ const testimonials = [
   { name: "Isha T.", initials: "IT", quote: "Zero chaos, zero calls, just clean clothes at the door.", rating: 5 },
 ];
 
+
+
 const steps = [
   { title: "Schedule", desc: "Pick a slot that fits your actual life.", icon: Calendar },
   { title: "Pickup", desc: "We collect from your door with live updates.", icon: Truck },
@@ -329,29 +331,7 @@ export default function Home() {
           ))}
         </div>
       </section>
-
-      <section className="testimonials-section" id="reviews">
-        <div className="section-kicker reveal">Receipts</div>
-        <SplitHeading>People are into it</SplitHeading>
-        <div className="marquee-shell">
-          <div className="marquee-track">
-            {[...testimonials, ...testimonials].map((review, index) => (
-              <article className="review-card" key={`${review.name}-${index}`}>
-                <span className="avatar">{review.initials}</span>
-                <div>
-                  <h3>{review.name}</h3>
-                  <div className="stars" aria-label={`${review.rating} stars`}>
-                    {Array.from({ length: review.rating }).map((_, starIndex) => (
-                      <Star key={starIndex} size={14} fill="currentColor" />
-                    ))}
-                  </div>
-                </div>
-                <p>&ldquo;{review.quote}&rdquo;</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
+      
 
       <section className="content-section booking-section" id="booking">
         <div className="booking-copy">
