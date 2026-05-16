@@ -1,10 +1,16 @@
 "use client";
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Shirt, Mail, Phone, MapPin } from 'lucide-react';
 import { useSiteConfig } from '@/hooks/useSiteConfig';
 
 export default function Footer() {
   const { config } = useSiteConfig();
+  const pathname = usePathname();
+
+  if (pathname === '/') {
+    return null;
+  }
 
   return (
     <footer className="bg-gray-900 border-t border-gray-800 text-gray-300 mt-auto">
