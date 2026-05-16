@@ -1,90 +1,450 @@
 "use client";
-import Link from 'next/link';
-import { ArrowRight, Sparkles, Clock, ShieldCheck } from 'lucide-react';
-import { useSiteConfig } from '@/hooks/useSiteConfig';
+
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useTheme } from "next-themes";
+import {
+  ArrowDown,
+  ArrowUp,
+  BadgeCheck,
+  Bed,
+  Brush,
+  Calendar,
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  Droplets,
+  Footprints,
+  House,
+  LoaderCircle,
+  MapPin,
+  Moon,
+  PackageCheck,
+  Phone,
+  Shirt,
+  Sparkles,
+  Star,
+  Sun,
+  Truck,
+  User,
+  Wand2,
+  Wind,
+} from "lucide-react";
+
+const cycleWords = ["Fresh", "Clean", "Crisp", "On time"];
+
+const services = [
+  { id: "iron", title: "Iron only", price: 49, icon: Wind },
+  { id: "wash-iron", title: "Wash + iron", price: 149, icon: Shirt },
+  { id: "wash-fold", title: "Wash + fold", price: 129, icon: PackageCheck },
+  { id: "dry-clean", title: "Dry cleaning", price: 249, icon: Sparkles },
+  { id: "premium", title: "Premium wash", price: 199, icon: Droplets },
+  { id: "stain", title: "Stain removal", price: 99, icon: Wand2 },
+  { id: "shoe", title: "Shoe cleaning", price: 199, icon: Footprints },
+  { id: "carpet", title: "Carpet/blanket", price: 349, icon: Bed },
+];
+
+const pricing = {
+  item: [
+    { name: "Basic", price: "₹99", unit: "from", features: ["Wash + fold", "48-hour return", "Eco detergent", "Pickup reminders"] },
+    { name: "Pro", price: "₹199", unit: "from", features: ["Wash + iron", "24-hour return", "Priority pickup", "Stain pre-check"] },
+    { name: "Premium", price: "₹399", unit: "from", features: ["Dry cleaning", "Fabric care notes", "Same-day slots", "Garment protection"] },
+  ],
+  monthly: [
+    { name: "Basic", price: "₹999", unit: "monthly", features: ["2 pickups", "30 items", "48-hour return", "Shared support"] },
+    { name: "Pro", price: "₹1,799", unit: "monthly", features: ["4 pickups", "70 items", "24-hour return", "Priority support"] },
+    { name: "Premium", price: "₹2,999", unit: "monthly", features: ["8 pickups", "Unlimited shirts", "Same-day windows", "Dedicated care lead"] },
+  ],
+};
+
+const testimonials = [
+  { name: "Ari K.", initials: "AK", quote: "My black tees came back soft, sharp, and not faded. Finally.", rating: 5 },
+  { name: "Maya S.", initials: "MS", quote: "The pickup flow feels like ordering coffee. Two taps and done.", rating: 5 },
+  { name: "Dev R.", initials: "DR", quote: "Suits looked editorial. The delivery was exactly on the minute.", rating: 5 },
+  { name: "Noor P.", initials: "NP", quote: "Obsessed with the premium wash. Everything smells expensive.", rating: 5 },
+  { name: "Leo V.", initials: "LV", quote: "Shoe cleaning revived a pair I had already written off.", rating: 5 },
+  { name: "Isha T.", initials: "IT", quote: "Zero chaos, zero calls, just clean clothes at the door.", rating: 5 },
+];
+
+const steps = [
+  { title: "Schedule", desc: "Pick a slot that fits your actual life.", icon: Calendar },
+  { title: "Pickup", desc: "We collect from your door with live updates.", icon: Truck },
+  { title: "Clean", desc: "Sorted, treated, washed, steamed, checked.", icon: Sparkles },
+  { title: "Deliver", desc: "Your fit returns crisp, packed, and ready.", icon: BadgeCheck },
+];
+
+type PlanMode = "item" | "monthly";
+
+function SplitHeading({ children }: { children: string }) {
+  return (
+    <h2 className="split-heading reveal">
+      {children.split(" ").map((word, index) => (
+        <span className="word-wrap" key={`${word}-${index}`}>
+          <span className="word" style={{ transitionDelay: `${index * 70}ms` }}>
+            {word}
+          </span>
+        </span>
+      ))}
+    </h2>
+  );
+}
 
 export default function Home() {
-  const { config, isLoaded } = useSiteConfig();
+  const [wordIndex, setWordIndex] = useState(0);
+  const [selectedServices, setSelectedServices] = useState<string[]>(["wash-fold", "premium"]);
+  const [activeStep, setActiveStep] = useState(0);
+  const [planMode, setPlanMode] = useState<PlanMode>("item");
+  const [submitState, setSubmitState] = useState<"idle" | "loading" | "success">("idle");
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const { resolvedTheme, setTheme } = useTheme();
 
-  if (!isLoaded) return null;
+  const selectedTotal = useMemo(
+    () => services.filter((service) => selectedServices.includes(service.id)).reduce((sum, service) => sum + service.price, 0),
+    [selectedServices],
+  );
+
+  const selectedLabels = useMemo(
+    () => services.filter((service) => selectedServices.includes(service.id)).map((service) => service.title),
+    [selectedServices],
+  );
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setWordIndex((current) => (current + 1) % cycleWords.length);
+    }, 1700);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("in-view");
+          }
+        });
+      },
+      { threshold: 0.18, rootMargin: "0px 0px -8% 0px" },
+    );
+
+    const stepObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveStep(Number((entry.target as HTMLElement).dataset.step || 0));
+          }
+        });
+      },
+      { threshold: 0.55 },
+    );
+
+    document.querySelectorAll(".reveal, .service-tile, .price-card, .review-card").forEach((element) => revealObserver.observe(element));
+    document.querySelectorAll(".timeline-step").forEach((element) => stepObserver.observe(element));
+
+    return () => {
+      revealObserver.disconnect();
+      stepObserver.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    const cursor = cursorRef.current;
+    if (!cursor) return;
+
+    const moveCursor = (event: MouseEvent) => {
+      cursor.style.transform = `translate3d(${event.clientX}px, ${event.clientY}px, 0) translate(-50%, -50%)`;
+    };
+
+    const syncCursorState = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      document.body.classList.toggle("cursor-is-active", Boolean(target.closest("a, button, input, textarea, select, .service-tile, .chip")));
+    };
+
+    window.addEventListener("mousemove", moveCursor);
+    window.addEventListener("mouseover", syncCursorState);
+
+    return () => {
+      window.removeEventListener("mousemove", moveCursor);
+      window.removeEventListener("mouseover", syncCursorState);
+      document.body.classList.remove("cursor-is-active");
+    };
+  }, []);
+
+  const toggleService = (id: string) => {
+    setSelectedServices((current) => (current.includes(id) ? current.filter((serviceId) => serviceId !== id) : [...current, id]));
+  };
+
+  const submitOrder = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmitState("loading");
+    window.setTimeout(() => setSubmitState("success"), 1200);
+    window.setTimeout(() => setSubmitState("idle"), 3200);
+  };
 
   return (
-    <div className="flex flex-col items-center overflow-x-hidden">
-      {/* Hero Section with HIFI effects */}
-      <section className="w-full relative bg-white dark:bg-slate-950 py-32 lg:py-48 overflow-hidden transition-colors duration-300">
-        
-        {/* Abstract Glowing Blobs */}
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-teal-400/20 dark:bg-teal-600/20 rounded-full blur-[128px] pointer-events-none"></div>
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-400/20 dark:bg-emerald-600/20 rounded-full blur-[128px] pointer-events-none"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-teal-100/50 via-transparent to-transparent dark:from-teal-900/20 opacity-50"></div>
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center flex flex-col items-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-50 dark:bg-teal-500/10 text-teal-700 dark:text-teal-300 text-sm font-semibold mb-8 border border-teal-200/50 dark:border-teal-500/20 animate-fade-in-up">
-            <Sparkles className="h-4 w-4" /> Leading Laundry Service
-          </div>
-          
-          <h1 className="text-6xl md:text-8xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-8 max-w-5xl mx-auto leading-tight drop-shadow-sm">
-            {config.heroTitle}
+    <div className="genz-page">
+      <div ref={cursorRef} className="custom-cursor" aria-hidden="true" />
+      <div className="noise-layer" aria-hidden="true" />
+
+      <nav className="genz-nav">
+        <a className="brand-mark" href="#hero" aria-label="FreshWash home">
+          <span className="brand-icon"><Shirt size={18} /></span>
+          FreshWash
+        </a>
+        <div className="nav-links">
+          <a href="#services">Services</a>
+          <a href="#pricing">Pricing</a>
+          <a href="#booking">Book</a>
+        </div>
+        <button
+          className="theme-toggle"
+          type="button"
+          aria-label="Toggle light mode"
+          onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+        >
+          {resolvedTheme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+      </nav>
+
+      <section className="hero-section" id="hero">
+        <div className="blob blob-one" />
+        <div className="blob blob-two" />
+        <div className="blob blob-three" />
+
+        <div className="hero-content page-load">
+          <p className="eyebrow">Laundry management for people with plans</p>
+          <h1>
+            Your fit.
+            <span>Always {cycleWords[wordIndex]}.</span>
           </h1>
-          
-          <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-300 mb-10 max-w-2xl mx-auto font-medium">
-            {config.heroSubtitle}
+          <p className="hero-copy">
+            Premium pickup, wash, fold, press, and delivery with a clean app flow and no beige waiting-room energy.
           </p>
-          
-          <div className="flex flex-col sm:flex-row justify-center gap-4 w-full sm:w-auto">
-            <Link href="/services" className="bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white px-10 py-5 rounded-full font-bold text-lg transition-all duration-300 shadow-[0_0_40px_rgba(20,184,166,0.3)] hover:shadow-[0_0_60px_rgba(20,184,166,0.5)] hover:-translate-y-1 flex items-center justify-center gap-3">
-              Explore Services <ArrowRight className="h-6 w-6" />
-            </Link>
+          <div className="hero-actions">
+            <a href="#booking" className="shimmer-btn">Book a pickup <ChevronRight size={18} /></a>
+            <a href="#services" className="ghost-btn">Build my order</a>
+          </div>
+        </div>
+
+        <div className="hero-orbit page-load" aria-hidden="true">
+          <div className="orbit-card card-a">24h<br /><span>turnaround</span></div>
+          <div className="orbit-card card-b">4.9<br /><span>rated</span></div>
+          <div className="machine">
+            <div className="machine-top" />
+            <div className="machine-door">
+              <div className="drum">
+                <span />
+                <span />
+                <span />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <a className="scroll-down" href="#services" aria-label="Scroll to services">
+          <ArrowDown size={22} />
+        </a>
+      </section>
+
+      <section className="content-section services-section" id="services">
+        <div className="section-kicker reveal">Services</div>
+        <SplitHeading>Pick your care stack</SplitHeading>
+        <p className="section-copy reveal">Tap multiple services and watch your order summary build itself in real time.</p>
+
+        <div className="services-grid">
+          {services.map((service, index) => {
+            const Icon = service.icon;
+            const isSelected = selectedServices.includes(service.id);
+
+            return (
+              <button
+                type="button"
+                className={`service-tile ${isSelected ? "selected" : ""}`}
+                key={service.id}
+                onClick={() => toggleService(service.id)}
+                style={{ transitionDelay: `${index * 55}ms` }}
+                aria-pressed={isSelected}
+              >
+                <span className="tile-icon"><Icon size={28} /></span>
+                <span className="tile-title">{service.title}</span>
+                <span className="tile-price">₹{service.price}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className={`live-summary ${selectedServices.length ? "visible" : ""}`}>
+          <span>{selectedServices.length || "No"} selected</span>
+          <strong>{selectedLabels.join(" + ") || "Choose a service"}</strong>
+          <a href="#booking">Order from ₹{selectedTotal}<ChevronRight size={16} /></a>
+        </div>
+      </section>
+
+      <section className="content-section timeline-section" id="process">
+        <div className="section-kicker reveal">How it works</div>
+        <SplitHeading>Four steps. Zero drama.</SplitHeading>
+        <div className="timeline">
+          <div className="timeline-line" />
+          {steps.map((step, index) => {
+            const Icon = step.icon;
+            const isActive = activeStep >= index;
+
+            return (
+              <article className={`timeline-step reveal ${isActive ? "active" : ""}`} data-step={index} key={step.title}>
+                <span className="step-number">0{index + 1}</span>
+                <span className="step-icon"><Icon size={24} /></span>
+                <h3>{step.title}</h3>
+                <p>{step.desc}</p>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="content-section pricing-section" id="pricing">
+        <div className="section-kicker reveal">Pricing</div>
+        <SplitHeading>Plans with main-character energy</SplitHeading>
+        <div className="price-toggle reveal" role="group" aria-label="Pricing mode">
+          <button type="button" className={planMode === "item" ? "active" : ""} onClick={() => setPlanMode("item")}>Per item</button>
+          <button type="button" className={planMode === "monthly" ? "active" : ""} onClick={() => setPlanMode("monthly")}>Monthly subscription</button>
+        </div>
+
+        <div className="pricing-grid">
+          {pricing[planMode].map((plan, index) => (
+            <article className={`price-card ${plan.name === "Pro" ? "popular" : ""}`} key={plan.name} style={{ transitionDelay: `${index * 80}ms` }}>
+              {plan.name === "Pro" && <span className="popular-badge">Most popular</span>}
+              <h3>{plan.name}</h3>
+              <div className="price-line">
+                <span>{plan.price}</span>
+                <em>{plan.unit}</em>
+              </div>
+              <ul>
+                {plan.features.map((feature) => (
+                  <li key={feature}><CheckCircle2 size={17} />{feature}</li>
+                ))}
+              </ul>
+              <a href="#booking" className="plan-cta">Choose {plan.name}</a>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="testimonials-section" id="reviews">
+        <div className="section-kicker reveal">Receipts</div>
+        <SplitHeading>People are into it</SplitHeading>
+        <div className="marquee-shell">
+          <div className="marquee-track">
+            {[...testimonials, ...testimonials].map((review, index) => (
+              <article className="review-card" key={`${review.name}-${index}`}>
+                <span className="avatar">{review.initials}</span>
+                <div>
+                  <h3>{review.name}</h3>
+                  <div className="stars" aria-label={`${review.rating} stars`}>
+                    {Array.from({ length: review.rating }).map((_, starIndex) => (
+                      <Star key={starIndex} size={14} fill="currentColor" />
+                    ))}
+                  </div>
+                </div>
+                <p>&ldquo;{review.quote}&rdquo;</p>
+              </article>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Features feature */}
-      <section className="w-full bg-slate-50 dark:bg-slate-900 py-32 border-t border-slate-200/50 dark:border-slate-800/50 transition-colors duration-300 relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">Why Choose Us</h2>
-            <p className="text-lg text-slate-600 dark:text-slate-400">Industry leading standards to give your clothes the perfection they deserve.</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            <FeatureCard 
-              icon={<Sparkles className="h-8 w-8 text-teal-500 dark:text-teal-400" />}
-              title="Premium Quality"
-              description="We use eco-friendly, high-end detergents to ensure your clothes stay vibrant and last longer."
-              delay="0"
-            />
-            <FeatureCard 
-              icon={<Clock className="h-8 w-8 text-emerald-500 dark:text-emerald-400" />}
-              title="Fast Turnaround"
-              description="Get your laundry back in 24 hours with our express service. We respect your time."
-              delay="100"
-            />
-            <FeatureCard 
-              icon={<ShieldCheck className="h-8 w-8 text-indigo-500 dark:text-indigo-400" />}
-              title="Care Guarantee"
-              description="Your garments are insured and handled by trained professionals with the utmost care."
-              delay="200"
-            />
-          </div>
+      <section className="content-section booking-section" id="booking">
+        <div className="booking-copy">
+          <div className="section-kicker reveal">Booking</div>
+          <SplitHeading>Send the laundry era into retirement</SplitHeading>
+          <p className="section-copy reveal">Choose services, add the door details, and let the care team handle the boring part beautifully.</p>
+        </div>
+
+        <div className="booking-grid">
+          <form className="booking-form reveal" onSubmit={submitOrder}>
+            <FloatingInput id="name" label="Name" icon={<User size={18} />} />
+            <FloatingInput id="phone" label="Phone" icon={<Phone size={18} />} />
+            <FloatingInput id="address" label="Address" icon={<MapPin size={18} />} />
+            <div className="form-row">
+              <FloatingInput id="date" label="Date" type="date" icon={<Calendar size={18} />} />
+              <FloatingInput id="time" label="Time" type="time" icon={<Clock size={18} />} />
+            </div>
+
+            <div className="chip-group" aria-label="Selected services">
+              {services.map((service) => (
+                <button
+                  type="button"
+                  className={`chip ${selectedServices.includes(service.id) ? "active" : ""}`}
+                  key={service.id}
+                  onClick={() => toggleService(service.id)}
+                >
+                  {service.title}
+                </button>
+              ))}
+            </div>
+
+            <button className={`submit-btn ${submitState}`} type="submit" disabled={submitState === "loading"}>
+              {submitState === "loading" && <LoaderCircle size={19} className="spin" />}
+              {submitState === "success" && <Check size={19} />}
+              {submitState === "idle" && "Confirm pickup"}
+              {submitState === "loading" && "Booking"}
+              {submitState === "success" && "Booked"}
+            </button>
+          </form>
+
+          <aside className="order-summary reveal">
+            <span className="summary-label">Live order</span>
+            <h3>{selectedServices.length ? `${selectedServices.length} service stack` : "No services yet"}</h3>
+            <div className="summary-list">
+              {selectedServices.length ? (
+                services.filter((service) => selectedServices.includes(service.id)).map((service) => (
+                  <div key={service.id}>
+                    <span>{service.title}</span>
+                    <strong>₹{service.price}</strong>
+                  </div>
+                ))
+              ) : (
+                <p>Start with a wash, press, or specialty clean.</p>
+              )}
+            </div>
+            <div className="summary-total">
+              <span>Estimated total</span>
+              <strong>₹{selectedTotal}</strong>
+            </div>
+          </aside>
         </div>
       </section>
+
+      <footer className="genz-footer">
+        <div className="footer-watermark" aria-hidden="true">FreshWash</div>
+        <div>
+          <h2>FreshWash</h2>
+          <p>Clean clothes. Sharp schedules. No corporate aftertaste.</p>
+        </div>
+        <div className="footer-links">
+          <a href="#services">Services</a>
+          <a href="#process">Process</a>
+          <a href="#pricing">Pricing</a>
+          <a href="#booking">Booking</a>
+        </div>
+        <div className="socials" aria-label="Social links">
+          <a href="#" aria-label="Instagram"><Sparkles size={19} /></a>
+          <a href="#" aria-label="Community"><BadgeCheck size={19} /></a>
+          <a href="#" aria-label="Studio"><Brush size={19} /></a>
+          <a href="#" aria-label="Home"><House size={19} /></a>
+        </div>
+        <a className="back-top" href="#hero" aria-label="Back to top"><ArrowUp size={20} /></a>
+      </footer>
     </div>
   );
 }
 
-function FeatureCard({ icon, title, description, delay }: { icon: React.ReactNode, title: string, description: string, delay: string }) {
+function FloatingInput({ id, label, type = "text", icon }: { id: string; label: string; type?: string; icon: ReactNode }) {
   return (
-    <div 
-      className="bg-white dark:bg-slate-950 p-10 rounded-[2rem] shadow-xl shadow-slate-200/20 dark:shadow-none border border-slate-100 dark:border-slate-800 hover:border-teal-500/30 dark:hover:border-teal-500/30 transition-all duration-300 group hover:-translate-y-2 relative overflow-hidden"
-      style={{ animationDelay: `${delay}ms` }}
-    >
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-teal-500/10 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-      <div className="w-20 h-20 bg-teal-50 dark:bg-teal-500/10 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-300">
-        {icon}
-      </div>
-      <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">{title}</h3>
-      <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium">{description}</p>
-    </div>
+    <label className="floating-field" htmlFor={id}>
+      {icon}
+      <input id={id} name={id} type={type} placeholder=" " required />
+      <span>{label}</span>
+    </label>
   );
 }

@@ -1,89 +1,164 @@
 "use client";
 
-import { useState } from "react";
-import { useServices, Service } from "@/hooks/useServices";
-import { CheckCircle2, ChevronRight } from "lucide-react";
+import { useState, useMemo } from "react";
+import { motion } from 'framer-motion';
+import { useRouter } from "next/navigation";
+import { useServices } from "@/hooks/useServices";
+
+function Icon({ name, className }: { name: string; className?: string }) {
+  const common = { width: 44, height: 44, viewBox: "0 0 24 24", fill: "none", strokeWidth: 1.5 } as any;
+  const stroke = "currentColor";
+  switch (name) {
+    case "iron":
+      return (
+        <svg {...common} className={className} stroke={stroke} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 15h16" />
+          <path d="M7 15V9a3 3 0 0 1 3-3h4a3 3 0 0 1 3 3v6" />
+          <path d="M9 20h6" />
+        </svg>
+      );
+    case "washing":
+      return (
+        <svg {...common} className={className} stroke={stroke} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 12a9 9 0 0 0 18 0" />
+          <path d="M6 12a6 6 0 0 1 12 0" />
+        </svg>
+      );
+    case "fold":
+      return (
+        <svg {...common} className={className} stroke={stroke} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 7l9 6 9-6-9-6-9 6z" />
+          <path d="M12 13v8" />
+        </svg>
+      );
+    case "hanger":
+      return (
+        <svg {...common} className={className} stroke={stroke} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 9a6 6 0 1 1 12 0v1" />
+          <path d="M3 20h18" />
+        </svg>
+      );
+    case "sparkles":
+      return (
+        <svg {...common} className={className} stroke={stroke} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M5 12l2 2 4-4" />
+          <path d="M19 7l-1 3 3 1-3 1 1 3-2-2-2 2 1-3-3-1 3-1-1-3 2 2 2-2z" />
+        </svg>
+      );
+    case "droplet-off":
+      return (
+        <svg {...common} className={className} stroke={stroke} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 3l18 18" />
+          <path d="M10.94 10.94A4 4 0 0 0 13 18a4 4 0 0 0 4-4c0-1.1-.45-2.1-1.17-2.83" />
+        </svg>
+      );
+    case "shoe":
+      return (
+        <svg {...common} className={className} stroke={stroke} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M2 13s2-4 6-4h8l4 4v3H2v-3z" />
+        </svg>
+      );
+    case "layout-grid":
+      return (
+        <svg {...common} className={className} stroke={stroke} strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="8" height="8" />
+          <rect x="13" y="3" width="8" height="8" />
+          <rect x="3" y="13" width="8" height="8" />
+          <rect x="13" y="13" width="8" height="8" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
 
 export default function ServicesPage() {
   const { services } = useServices();
-  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string[]>([]);
 
-  const toggleService = (id: string) => {
-    setSelectedServices(prev => 
-      prev.includes(id) ? prev.filter(sId => sId !== id) : [...prev, id]
-    );
+  const toggle = (id: string) => {
+    setSelected(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
   };
 
-  const total = services
-    .filter(s => selectedServices.includes(s.id))
-    .reduce((sum, s) => sum + s.price, 0);
+  const selectedServices = useMemo(() => services.filter(s => selected.includes(s.id)), [services, selected]);
+
+  const router = useRouter();
+
+  const handleContinue = () => {
+    const names = selectedServices.map(s => s.name);
+    // persist selection to sessionStorage then navigate to checkout/address form
+    try {
+      sessionStorage.setItem("selected_services", JSON.stringify(selectedServices));
+    } catch (e) {
+      console.warn("Could not persist selected services", e);
+    }
+    router.push("/checkout");
+  };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-24 w-full">
-      <div className="text-center mb-16 relative">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-teal-500/10 dark:bg-teal-500/20 blur-[100px] pointer-events-none rounded-full"></div>
-        <h1 className="text-5xl font-extrabold text-slate-900 dark:text-white mb-6 drop-shadow-sm relative z-10">Our Premium Services</h1>
-        <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto relative z-10 font-medium">Select the services you need and we will handle the rest with the highest care possible.</p>
-      </div>
+    <div className="max-w-6xl mx-auto px-4 py-12">
+      <header className="mb-6 text-center">
+        <h1 className="text-2xl font-semibold text-[22px]">Choose your service</h1>
+        <p className="text-[12px] text-gray-500 mt-1">Select one or more services for your laundry order</p>
+      </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6 relative z-10">
-          {services.map(service => {
-            const isSelected = selectedServices.includes(service.id);
-            return (
-              <div 
-                key={service.id} 
-                onClick={() => toggleService(service.id)}
-                className={`cursor-pointer rounded-3xl p-8 border-2 transition-all duration-300 transform hover:-translate-y-1 ${
-                  isSelected 
-                    ? 'border-teal-500 shadow-xl shadow-teal-500/20 dark:shadow-teal-900/40 bg-teal-50/50 dark:bg-teal-900/20' 
-                    : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-teal-300 dark:hover:border-teal-700 hover:shadow-lg'
-                }`}
-              >
-                <div className="flex justify-between items-start mb-6">
-                  <span className="inline-block px-4 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold rounded-full uppercase tracking-wider">
-                    {service.category}
-                  </span>
-                  {isSelected && <CheckCircle2 className="text-teal-500 dark:text-teal-400 h-7 w-7 animate-in zoom-in" />}
+      <section className="service-grid">
+        {services.map((service, idx) => {
+          const isSelected = selected.includes(service.id);
+          return (
+            <motion.article
+              key={service.id}
+              onClick={() => toggle(service.id)}
+              role="button"
+              aria-pressed={isSelected}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.06, duration: 0.45 }}
+              whileHover={{ scale: 1.02 }}
+              className={`service-card p-4 relative cursor-pointer transition-transform duration-150` + (isSelected ? " selected" : "")}
+            >
+              <div className="flex items-start justify-between">
+                <div className={`${isSelected ? "text-[var(--accent)]" : "text-current"}`}>
+                  <Icon name={service.icon || ""} className={`text-[22px] ${isSelected ? "text-[var(--accent)]" : "text-current"}`} />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">{service.name}</h3>
-                <p className="text-slate-500 dark:text-slate-400 mb-8 min-h-[3rem] font-medium">{service.description}</p>
-                <div className="text-3xl font-extrabold text-slate-900 dark:text-white">${service.price.toFixed(2)}</div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Sidebar Summary */}
-        <div className="relative z-10">
-          <div className="bg-white dark:bg-slate-950 p-8 rounded-[2rem] shadow-2xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 h-fit sticky top-32">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-8 border-b border-slate-100 dark:border-slate-800 pb-4">Your Selection</h2>
-            {selectedServices.length === 0 ? (
-              <p className="text-slate-500 dark:text-slate-400 font-medium py-8 text-center bg-slate-50 dark:bg-slate-900/50 rounded-2xl">No services selected yet.</p>
-            ) : (
-              <div className="space-y-4 mb-8">
-                {services.filter(s => selectedServices.includes(s.id)).map(s => (
-                  <div key={s.id} className="flex justify-between items-center text-base font-semibold bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl">
-                    <span className="text-slate-700 dark:text-slate-300">{s.name}</span>
-                    <span className="text-slate-900 dark:text-white">${s.price.toFixed(2)}</span>
+                <div className="absolute top-3 right-3">
+                  <div className={`w-6 h-6 rounded-full border ${isSelected ? "bg-[var(--accent)] border-[var(--accent)]" : "bg-white border-gray-300"} flex items-center justify-center`}>
+                    {isSelected ? (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    ) : (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2"><circle cx="12" cy="12" r="5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    )}
                   </div>
-                ))}
+                </div>
               </div>
-            )}
-            
-            <div className="mt-8 border-t border-slate-100 dark:border-slate-800 pt-8">
-              <div className="flex justify-between items-center mb-8">
-                <span className="text-lg text-slate-500 dark:text-slate-400 font-bold">Total Estimated</span>
-                <span className="text-4xl font-extrabold text-slate-900 dark:text-white">${total.toFixed(2)}</span>
+
+              {service.badge && (
+                <div className="absolute left-4 top-3 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-md">{service.badge}</div>
+              )}
+
+              <h3 className="mt-6 text-[15px] font-medium text-[var(--color-text-primary)]">{service.name}</h3>
+              <p className="text-[12px] text-[var(--color-text-muted)] leading-[18px] mt-2">{service.description}</p>
+
+              <div className="mt-4 flex items-center justify-between">
+                <span className={`price-pill ${isSelected ? 'selected' : ''}`}>₹{service.price}{service.category ? ` / ${service.category.replace('Per ', '')}` : ''}</span>
               </div>
-              <button 
-                disabled={selectedServices.length === 0}
-                className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white py-5 rounded-2xl font-bold text-lg transition-all flex justify-center items-center gap-2 shadow-[0_0_20px_rgba(20,184,166,0.3)] hover:shadow-[0_0_30px_rgba(20,184,166,0.5)]"
-              >
-                Continue to Booking <ChevronRight className="h-6 w-6" />
-              </button>
-            </div>
+            </motion.article>
+          );
+        })}
+      </section>
+
+      <div className="fixed bottom-4 left-0 right-0 flex justify-center">
+        <div className="w-full max-w-6xl bg-[var(--color-background-secondary)] rounded-xl px-6 py-3 flex items-center justify-between shadow-sm">
+          <div className="text-sm text-[var(--color-text-muted)]">
+            {selected.length === 0 ? 'No services selected' : selectedServices.map(s => s.name).join(', ')}
           </div>
+          <button
+            onClick={handleContinue}
+            disabled={selected.length === 0}
+            className={`ml-4 rounded-md px-4 py-2 font-medium text-white ${selected.length === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-[var(--accent)] hover:bg-[#144a80]'}`}
+          >
+            Continue
+          </button>
         </div>
       </div>
     </div>
