@@ -1,78 +1,82 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import type { Service } from "@/lib/database.types";
 
-export type Service = {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  category: string;
-  icon?: string;
-  badge?: string;
-};
+// Re-export Service type so existing imports keep working
+export type { Service };
 
-const defaultServices: Service[] = [
-  { id: "iron-only", name: "Iron only", description: "Professional pressing for individual garments.", price: 15, category: "Per piece", icon: "iron" },
-  { id: "wash-iron", name: "Wash + iron", description: "Full wash and professional ironing.", price: 49, category: "Per kg", icon: "washing", badge: "Popular" },
-  { id: "wash-fold", name: "Wash + fold", description: "Wash, dry and neatly folded.", price: 39, category: "Per kg", icon: "fold" },
-  { id: "dry-cleaning", name: "Dry cleaning", description: "Careful dry cleaning for delicate fabrics.", price: 99, category: "Per piece", icon: "hanger" },
-  { id: "premium-wash", name: "Premium wash", description: "Gentle, premium detergents for best results.", price: 69, category: "Per kg", icon: "sparkles" },
-  { id: "stain-removal", name: "Stain removal", description: "Targeted treatment for tough stains.", price: 29, category: "Per stain", icon: "droplet-off" },
-  { id: "shoe-cleaning", name: "Shoe cleaning", description: "Deep clean and deodorize shoes (per pair).", price: 79, category: "Per pair", icon: "shoe" },
-  { id: "carpet-blanket", name: "Carpet / blanket", description: "Large-item cleaning for carpets and blankets.", price: 149, category: "Per piece", icon: "layout-grid" },
+const FALLBACK: Service[] = [
+  { id: "iron-only",      name: "Iron only",        description: "Professional pressing for individual garments.", price: 15,  category: "Per piece", icon: "iron",        badge: null, sort_order: 1, active: true, created_at: "", updated_at: "" },
+  { id: "wash-iron",      name: "Wash + iron",       description: "Full wash and professional ironing.",           price: 49,  category: "Per kg",    icon: "washing",     badge: "Popular", sort_order: 2, active: true, created_at: "", updated_at: "" },
+  { id: "wash-fold",      name: "Wash + fold",       description: "Wash, dry and neatly folded.",                  price: 39,  category: "Per kg",    icon: "fold",        badge: null, sort_order: 3, active: true, created_at: "", updated_at: "" },
+  { id: "dry-cleaning",   name: "Dry cleaning",      description: "Careful dry cleaning for delicate fabrics.",   price: 99,  category: "Per piece", icon: "hanger",      badge: null, sort_order: 4, active: true, created_at: "", updated_at: "" },
+  { id: "premium-wash",   name: "Premium wash",      description: "Gentle, premium detergents for best results.", price: 69,  category: "Per kg",    icon: "sparkles",    badge: null, sort_order: 5, active: true, created_at: "", updated_at: "" },
+  { id: "stain-removal",  name: "Stain removal",     description: "Targeted treatment for tough stains.",         price: 29,  category: "Per stain", icon: "droplet-off", badge: null, sort_order: 6, active: true, created_at: "", updated_at: "" },
+  { id: "shoe-cleaning",  name: "Shoe cleaning",     description: "Deep clean and deodorize shoes (per pair).",   price: 79,  category: "Per pair",  icon: "shoe",        badge: null, sort_order: 7, active: true, created_at: "", updated_at: "" },
+  { id: "carpet-blanket", name: "Carpet / blanket",  description: "Large-item cleaning for carpets and blankets.",price: 149, category: "Per piece", icon: "layout-grid", badge: null, sort_order: 8, active: true, created_at: "", updated_at: "" },
 ];
 
-export function useServices() {
-  const [services, setServices] = useState<Service[]>([]);
+async function getAuthToken(): Promise<string | null> {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token ?? null;
+}
 
-  useEffect(() => {
+export function useServices() {
+  const [services, setServices] = useState<Service[]>(FALLBACK);
+  const [loading,  setLoading]  = useState(true);
+  const [error,    setError]    = useState<string | null>(null);
+
+  const fetchServices = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const stored = localStorage.getItem("laundry_services");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          const storedIds = new Set(parsed.map((s: any) => s.id));
-          const defaultIds = new Set(defaultServices.map(s => s.id));
-          const sameCount = parsed.length === defaultServices.length;
-          const allDefaultsPresent = [...defaultIds].every(id => storedIds.has(id));
-          if (sameCount && allDefaultsPresent) {
-            setServices(parsed);
-          } else {
-            setServices(defaultServices);
-            localStorage.setItem("laundry_services", JSON.stringify(defaultServices));
-          }
-        } else {
-          setServices(defaultServices);
-          localStorage.setItem("laundry_services", JSON.stringify(defaultServices));
-        }
-      } else {
-        setServices(defaultServices);
-        localStorage.setItem("laundry_services", JSON.stringify(defaultServices));
-      }
+      const res = await fetch("/api/services");
+      if (!res.ok) throw new Error(await res.text());
+      const data: Service[] = await res.json();
+      setServices(data.length ? data : FALLBACK);
     } catch (err) {
-      setServices(defaultServices);
-      localStorage.setItem("laundry_services", JSON.stringify(defaultServices));
+      setError(err instanceof Error ? err.message : "Failed to load services");
+      setServices(FALLBACK);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  const saveServices = (newServices: Service[]) => {
-    setServices(newServices);
-    localStorage.setItem("laundry_services", JSON.stringify(newServices));
+  useEffect(() => { fetchServices(); }, [fetchServices]);
+
+  const addService = async (service: Omit<Service, "id" | "created_at" | "updated_at" | "active">) => {
+    const token = await getAuthToken();
+    const res = await fetch("/api/services", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(service),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    await fetchServices();
   };
 
-  const addService = (service: Omit<Service, "id">) => {
-    const newService = { ...service, id: Math.random().toString(36).substr(2, 9) };
-    saveServices([...services, newService]);
+  const updateService = async (id: string, updates: Partial<Service>) => {
+    const token = await getAuthToken();
+    const res = await fetch(`/api/services/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(updates),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    await fetchServices();
   };
 
-  const updateService = (id: string, updatedData: Partial<Service>) => {
-    saveServices(services.map(s => s.id === id ? { ...s, ...updatedData } : s));
+  const deleteService = async (id: string) => {
+    const token = await getAuthToken();
+    const res = await fetch(`/api/services/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error(await res.text());
+    await fetchServices();
   };
 
-  const deleteService = (id: string) => {
-    saveServices(services.filter(s => s.id !== id));
-  };
-
-  return { services, addService, updateService, deleteService };
+  return { services, loading, error, refetch: fetchServices, addService, updateService, deleteService };
 }

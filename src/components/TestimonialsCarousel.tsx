@@ -8,19 +8,19 @@ const TESTIMONIALS = [
     id: 't1',
     name: 'Sarah Johnson',
     text: "The best laundry service I've ever used. They managed to get out a stain I thought was permanent.",
-    img: 'https://i.pravatar.cc/100?img=23'
+    initials: 'SJ'
   },
   {
     id: 't2',
     name: 'Michael Chen',
     text: "Super fast and incredibly reliable. I travel constantly for work and they always make sure my suits look pristine.",
-    img: 'https://i.pravatar.cc/100?img=11'
+    initials: 'MC'
   },
   {
     id: 't3',
     name: 'Emma Williams',
     text: "I love how eco-friendly their process is. The clothes smell naturally fresh, not overpowered with chemical perfumes.",
-    img: 'https://i.pravatar.cc/100?img=44'
+    initials: 'EW'
   }
 ];
 
@@ -42,9 +42,11 @@ export default function TestimonialsCarousel() {
             {TESTIMONIALS.map((t, i) => i === index && (
               <motion.div key={t.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.45 }} className="absolute inset-0 flex items-center justify-center">
                 <div className="bg-[var(--color-background-primary)] dark:bg-slate-900 p-6 rounded-2xl shadow-md border border-[var(--color-border-tertiary)] max-w-3xl mx-auto text-left flex items-center gap-6">
-                  <img src={t.img} alt={t.name} className="w-16 h-16 rounded-full border-4 border-white dark:border-slate-900 shadow-sm" />
+                  <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full border-4 border-white bg-teal-500 font-black text-slate-950 shadow-sm dark:border-slate-900">
+                    {t.initials}
+                  </div>
                   <div>
-                    <p className="text-[var(--color-text-muted)] italic mb-2">"{t.text}"</p>
+                    <p className="text-[var(--color-text-muted)] italic mb-2">&ldquo;{t.text}&rdquo;</p>
                     <p className="font-semibold text-[var(--color-text-primary)]">{t.name}</p>
                   </div>
                 </div>
