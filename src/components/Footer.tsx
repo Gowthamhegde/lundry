@@ -80,11 +80,11 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li className="flex items-start gap-2.5">
                 <Mail className="h-4 w-4 text-teal-500 mt-0.5 shrink-0" />
-                <span>{config.contactEmail || "support@freshwash.demo"}</span>
+                <span>{config.contactEmail || "freshwash@example.com"}</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <Phone className="h-4 w-4 text-teal-500 mt-0.5 shrink-0" />
-                <span>{config.contactPhone || "+1 (555) 123-4567"}</span>
+                <span>{config.contactPhone || "+1 (555) 123-4567  "}</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <MapPin className="h-4 w-4 text-teal-500 mt-0.5 shrink-0" />

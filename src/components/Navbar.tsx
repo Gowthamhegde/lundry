@@ -130,10 +130,16 @@ export default function Navbar() {
                 </button>
               </>
             ) : (
-              <Link href="/login"
-                className="hidden sm:inline-flex items-center gap-2 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white px-5 py-2 rounded-full font-bold text-sm transition-all duration-200 shadow-md shadow-teal-500/20 hover:shadow-teal-500/40 hover:-translate-y-px">
-                <LogIn className="h-4 w-4" /> Sign in
-              </Link>
+              <>
+                <Link href="/login"
+                  className="hidden sm:inline-flex items-center gap-2 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 px-4 py-2 rounded-full font-semibold text-sm transition-all duration-200">
+                  <LogIn className="h-4 w-4" /> Sign in
+                </Link>
+                <Link href="/signup"
+                  className="hidden sm:inline-flex items-center gap-2 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white px-5 py-2 rounded-full font-bold text-sm transition-all duration-200 shadow-md shadow-teal-500/20 hover:shadow-teal-500/40 hover:-translate-y-px">
+                  Sign up
+                </Link>
+              </>
             )}
 
             <button onClick={() => setMenuOpen((v) => !v)}
@@ -175,10 +181,16 @@ export default function Navbar() {
                 </button>
               </>
             ) : (
-              <Link href="/login"
-                className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-teal-500 to-emerald-500 text-white px-5 py-3 rounded-xl font-bold text-sm shadow-md shadow-teal-500/20">
-                <LogIn className="h-4 w-4" /> Sign in
-              </Link>
+              <>
+                <Link href="/login"
+                  className="flex items-center justify-center gap-2 w-full border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 px-5 py-3 rounded-xl font-semibold text-sm">
+                  <LogIn className="h-4 w-4" /> Sign in
+                </Link>
+                <Link href="/signup"
+                  className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-teal-500 to-emerald-500 text-white px-5 py-3 rounded-xl font-bold text-sm shadow-md shadow-teal-500/20">
+                  Sign up free
+                </Link>
+              </>
             )}
           </div>
         </div>
