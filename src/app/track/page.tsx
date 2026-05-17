@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   BadgeCheck, CheckCircle2, ChevronRight, Clock,
   LogIn, Package, PackageCheck, Search, Shirt, Truck,
 } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 type OrderService = { id: string; name: string; price: number; quantity?: number };
 type Order = {
@@ -39,6 +41,30 @@ function readOrders(): Order[] {
     if (!raw) return [];
     const p = JSON.parse(raw) as unknown;
     return Array.isArray(p) ? (p as Order[]) : [p as Order];
+  } catch { return []; }
+}
+
+async function fetchOrdersFromDB(): Promise<Order[]> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return [];
+    const res = await fetch("/api/orders", {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    if (!res.ok) return [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rows: any[] = await res.json();
+    return rows.map((r) => ({
+      id: r.id,
+      customer: { name: r.customer_name, phone: r.customer_phone },
+      pickup: { address: r.pickup_address, date: r.pickup_date, time: r.pickup_time },
+      services: (r.order_items ?? []).map((i: { id: string; name: string; price: number; quantity: number }) => ({
+        id: i.id, name: i.name, price: i.price, quantity: i.quantity,
+      })),
+      estimatedTotal: r.estimated_total,
+      status: r.status,
+      createdAt: r.created_at,
+    }));
   } catch { return []; }
 }
 
@@ -137,7 +163,8 @@ function OrderCard({ order }: { order: Order }) {
   );
 }
 
-export default function TrackPage() {
+function TrackContent() {
+  const { checked } = useRequireAuth();
   const searchParams = useSearchParams();
   const [orders,   setOrders]   = useState<Order[]>([]);
   const [query,    setQuery]    = useState(searchParams.get("id") ?? "");
@@ -148,15 +175,19 @@ export default function TrackPage() {
 
   useEffect(() => {
     setMounted(true);
-    const stored = readOrders();
-    setOrders(stored);
-    const pid = searchParams.get("id");
-    if (pid && stored.length) {
-      const found = stored.find((o) => o.id?.toLowerCase() === pid.toLowerCase());
-      setResult(found ?? null);
-      setNotFound(!found);
-      setSearched(true);
-    }
+    (async () => {
+      // Try Supabase first (logged-in users), fall back to localStorage
+      const dbOrders = await fetchOrdersFromDB();
+      const stored = dbOrders.length > 0 ? dbOrders : readOrders();
+      setOrders(stored);
+      const pid = searchParams.get("id");
+      if (pid && stored.length) {
+        const found = stored.find((o) => o.id?.toLowerCase() === pid.toLowerCase());
+        setResult(found ?? null);
+        setNotFound(!found);
+        setSearched(true);
+      }
+    })();
   }, [searchParams]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -167,6 +198,9 @@ export default function TrackPage() {
     setNotFound(!found);
     setSearched(true);
   };
+
+  // Still checking auth — render nothing to avoid flash
+  if (!checked) return null;
 
   return (
     <div className="gz-page">
@@ -228,5 +262,26 @@ export default function TrackPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function TrackPage() {
+  return (
+    <Suspense fallback={
+      <div className="gz-page">
+        <div className="gz-blob gz-blob-a" />
+        <div className="gz-blob gz-blob-b" />
+        <div className="gz-shell gz-shell-narrow">
+          <div className="gz-empty-state" style={{ marginTop: "80px" }}>
+            <div className="gz-empty-icon">
+              <Search size={28} />
+            </div>
+            <p className="gz-empty-desc">Loading…</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <TrackContent />
+    </Suspense>
   );
 }

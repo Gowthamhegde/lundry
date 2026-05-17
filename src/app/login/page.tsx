@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import {
   AlertCircle, ArrowRight, CheckCircle2, Eye, EyeOff,
   Loader2, Lock, LogIn, Mail, Shirt,
@@ -17,14 +18,17 @@ const PERKS = [
   { title: "Order history",        desc: "Review and reorder your favourite stack." },
 ];
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
-  const [email,     setEmail]     = useState("");
-  const [password,  setPassword]  = useState("");
-  const [showPass,  setShowPass]  = useState(false);
-  const [remember,  setRemember]  = useState(false);
-  const [state,     setState]     = useState<AuthState>("idle");
-  const [errMsg,    setErrMsg]    = useState("");
+  const searchParams = useSearchParams();
+  const from = searchParams.get("from") || "/order";
+
+  const [email,    setEmail]    = useState("");
+  const [password, setPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [remember, setRemember] = useState(false);
+  const [state,    setState]    = useState<AuthState>("idle");
+  const [errMsg,   setErrMsg]   = useState("");
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,14 +41,14 @@ export default function LoginPage() {
         ? "Wrong email or password. Please try again." : error.message);
       return;
     }
-    router.push("/order");
+    router.push(from);
   };
 
   const handleGoogle = async () => {
     setState("loading"); setErrMsg("");
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/order` },
+      options: { redirectTo: `${window.location.origin}${from}` },
     });
     if (error) { setState("error"); setErrMsg(error.message); }
   };
@@ -168,5 +172,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

@@ -1,32 +1,44 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { SiteConfig, defaultSiteConfig } from "@/lib/config";
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import { defaultSiteConfig, type SiteConfig } from "@/lib/config";
 
-function readStoredConfig() {
-  try {
-    const stored = localStorage.getItem("site_config");
-    return stored ? ({ ...defaultSiteConfig, ...JSON.parse(stored) } as SiteConfig) : defaultSiteConfig;
-  } catch {
-    return defaultSiteConfig;
-  }
+async function getAuthToken(): Promise<string | null> {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token ?? null;
 }
 
 export function useSiteConfig() {
-  const [config, setConfig] = useState<SiteConfig>(defaultSiteConfig);
+  const [config,   setConfig]   = useState<SiteConfig>(defaultSiteConfig);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  useEffect(() => {
-    queueMicrotask(() => {
-      setConfig(readStoredConfig());
+  const fetchConfig = useCallback(async () => {
+    try {
+      const res = await fetch("/api/site-config");
+      if (!res.ok) throw new Error(await res.text());
+      const data: Partial<SiteConfig> = await res.json();
+      setConfig({ ...defaultSiteConfig, ...data });
+    } catch {
+      // Fall back to defaults silently
+      setConfig(defaultSiteConfig);
+    } finally {
       setIsLoaded(true);
-    });
+    }
   }, []);
 
-  const saveConfig = (newConfig: SiteConfig) => {
+  useEffect(() => { fetchConfig(); }, [fetchConfig]);
+
+  const saveConfig = async (newConfig: SiteConfig) => {
+    const token = await getAuthToken();
+    const res = await fetch("/api/site-config", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(newConfig),
+    });
+    if (!res.ok) throw new Error(await res.text());
     setConfig(newConfig);
-    localStorage.setItem("site_config", JSON.stringify(newConfig));
   };
 
-  return { config, saveConfig, isLoaded };
+  return { config, saveConfig, isLoaded, refetch: fetchConfig };
 }
