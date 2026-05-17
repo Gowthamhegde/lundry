@@ -82,7 +82,8 @@ function DatePicker({ value, onChange }: { value: string; onChange: (v: string) 
 
       {open && (
         <div style={{
-          position:"absolute", top:"calc(100% + 8px)", left:0, zIndex:50, width:300,
+          position:"absolute", top:"calc(100% + 8px)", left:0, zIndex:50,
+          width:"min(300px, calc(100vw - 32px))",
           background:"var(--color-background-primary)", border:"1px solid rgba(148,163,184,0.25)",
           borderRadius:14, boxShadow:"0 20px 60px rgba(0,0,0,0.15)", padding:16,
         }}>
@@ -211,7 +212,8 @@ function TimePicker({ value, onChange }: { value: string; onChange: (v: string) 
 
       {open && (
         <div style={{
-          position:"absolute", top:"calc(100% + 8px)", left:0, zIndex:50, width:260,
+          position:"absolute", top:"calc(100% + 8px)", left:0, zIndex:50,
+          width:"min(260px, calc(100vw - 32px))",
           background:"var(--color-background-primary)", border:"1px solid rgba(148,163,184,0.25)",
           borderRadius:14, boxShadow:"0 20px 60px rgba(0,0,0,0.15)", padding:12, maxHeight:320, overflowY:"auto",
         }}>

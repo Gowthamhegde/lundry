@@ -2327,12 +2327,18 @@ a.service-tile:hover .tile-icon {
 .gz-grid-2 { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; }
 .gz-col-2  { grid-column: 1 / -1; }
 
+@media (max-width: 540px) {
+  .gz-grid-2 { grid-template-columns: 1fr; }
+  .gz-col-2  { grid-column: 1; }
+}
+
 /* ── services page ── */
 .gz-services-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 14px;
   margin-top: 8px;
+  padding-bottom: 100px; /* space for sticky bar */
 }
 
 .gz-service-card {
@@ -2420,6 +2426,34 @@ a.service-tile:hover .tile-icon {
   font-size: 1.5rem; font-weight: 800; color: var(--gz-teal);
 }
 
+@media (max-width: 1024px) {
+  .gz-services-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 720px) {
+  .gz-services-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .gz-service-card { min-height: 180px; padding: 16px; }
+  .gz-svc-name { font-size: 1rem; }
+  .gz-svc-icon { width: 42px; height: 42px; margin-bottom: 12px; }
+  .gz-sticky-inner {
+    border-radius: 16px;
+    padding: 12px 16px;
+    gap: 10px;
+  }
+  .gz-sticky-names { display: none; }
+  .gz-sticky-total { font-size: 1.2rem; }
+}
+
+@media (max-width: 420px) {
+  .gz-services-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .gz-service-card { min-height: 160px; padding: 14px; }
+  .gz-svc-desc { display: none; }
+  .gz-sticky-inner { flex-direction: row; align-items: center; }
+  .gz-sticky-info { flex: 1; }
+  .gz-sticky-right { gap: 10px; }
+  .gz-cta-btn { min-height: 40px; padding: 0 16px; font-size: 0.85rem; }
+}
+
 /* ── order page ── */
 .gz-order-layout {
   display: grid;
@@ -2450,6 +2484,35 @@ a.service-tile:hover .tile-icon {
 .gz-form-actions {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   flex-wrap: wrap;
+}
+
+@media (max-width: 860px) {
+  .gz-order-layout {
+    grid-template-columns: 1fr;
+  }
+  .gz-summary-panel {
+    position: static;
+    order: -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .gz-svc-pick-grid {
+    grid-template-columns: 1fr;
+  }
+  .gz-panel {
+    padding: 16px;
+  }
+  .gz-form-actions {
+    flex-direction: column;
+  }
+  .gz-form-actions > * {
+    width: 100%;
+    justify-content: center;
+  }
+  .gz-shell {
+    padding: 32px 0 60px;
+  }
 }
 
 /* summary panel */
