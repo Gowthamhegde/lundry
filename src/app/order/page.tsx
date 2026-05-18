@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef, type ChangeEvent, type FormEvent } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import {
   CalendarDays, CheckCircle2, ChevronRight, ChevronLeft, Clock,
-  ClipboardList, Loader2, MapPin, Minus, PackageCheck, Phone, Plus, User, Hourglass,
+  ClipboardList, CreditCard, Loader2, MapPin, Minus, PackageCheck, Phone, Plus, User, Hourglass,
 } from "lucide-react";
 import { useServices } from "@/hooks/useServices";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
@@ -470,15 +470,93 @@ export default function OrderPage() {
     };
 
     try {
-      const res = await fetch("/api/orders", {
+      // Step 1: Save order to DB
+      const orderRes = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) {
-        const err = await res.json() as { error?: string };
+      if (!orderRes.ok) {
+        const err = await orderRes.json() as { error?: string };
         throw new Error(err.error ?? "Failed to place order");
       }
+
+      // Step 2: Create Razorpay order
+      const rzpRes = await fetch("/api/payment/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: total, orderId: id }),
+      });
+      if (!rzpRes.ok) {
+        const err = await rzpRes.json() as { error?: string };
+        throw new Error(err.error ?? "Failed to initiate payment");
+      }
+      const { razorpayOrderId, amount: rzpAmount, currency } = await rzpRes.json() as {
+        razorpayOrderId: string; amount: number; currency: string;
+      };
+
+      // Step 3: Open Razorpay checkout
+      await new Promise<void>((resolve, reject) => {
+        const rzpKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+        if (!rzpKey) {
+          reject(new Error("Razorpay key not configured"));
+          return;
+        }
+        const options = {
+          key:         rzpKey,
+          amount:      rzpAmount,
+          currency,
+          name:        "FreshWash",
+          description: `Order ${id}`,
+          order_id:    razorpayOrderId,
+          prefill: {
+            name:    form.name.trim(),
+            contact: form.phone.trim(),
+          },
+          theme: { color: "#14b8a6" },
+          handler: async (response: {
+            razorpay_order_id: string;
+            razorpay_payment_id: string;
+            razorpay_signature: string;
+          }) => {
+            try {
+              // Step 4: Verify payment server-side
+              const verifyRes = await fetch("/api/payment/verify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...response, orderId: id }),
+              });
+              if (!verifyRes.ok) {
+                const err = await verifyRes.json() as { error?: string };
+                reject(new Error(err.error ?? "Payment verification failed"));
+                return;
+              }
+              resolve();
+            } catch (err) {
+              reject(err);
+            }
+          },
+          modal: {
+            ondismiss: () => reject(new Error("Payment cancelled. Your order has been saved — you can retry payment from the track page.")),
+          },
+        };
+
+        if (typeof window !== "undefined") {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const rzp = new (window as any).Razorpay(options);
+
+          // Handle payment failure event
+          rzp.on("payment.failed", (response: { error: { description: string; reason: string } }) => {
+            reject(new Error(`Payment failed: ${response.error.description ?? response.error.reason ?? "Unknown error"}`));
+          });
+
+          rzp.open();
+        } else {
+          reject(new Error("Razorpay is not available"));
+        }
+      });
+
+      // Step 5: Save to localStorage and show waiting screen
       try {
         localStorage.setItem("last_order", JSON.stringify({
           id, customer: { name: form.name.trim(), phone: form.phone.trim() },
@@ -487,6 +565,7 @@ export default function OrderPage() {
           createdAt: new Date().toISOString(),
         }));
       } catch { /* ignore */ }
+
       setPlacedId(id);
       setScreen("waiting");
     } catch (err) {
@@ -584,7 +663,7 @@ export default function OrderPage() {
             <div className="gz-form-actions">
               <Link href="/services" className="gz-ghost-btn">← Browse services</Link>
               <button type="submit" disabled={!ok || submitting} className="gz-cta-btn">
-                {submitting ? <><Loader2 size={15} className="gz-spin" /> Placing…</> : <>Place order <ChevronRight size={16} /></>}
+                {submitting ? <><Loader2 size={15} className="gz-spin" /> Processing…</> : <><CreditCard size={15} /> Pay & Place order</>}
               </button>
             </div>
           </form>
