@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertCircle, ArrowRight, Eye, EyeOff, Loader2, Lock, Mail, Shirt, CheckCircle2 } from "lucide-react";
+import { AlertCircle, ArrowRight, CheckCircle2, Loader2, Mail, Shirt, KeyRound } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
 const GOOGLE_ICON = (
@@ -20,20 +20,42 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const from = searchParams.get("from") || "/order";
 
-  const [email,    setEmail]    = useState("");
-  const [password, setPassword] = useState("");
-  const [showPass, setShowPass] = useState(false);
-  const [loading,  setLoading]  = useState(false);
-  const [errMsg,   setErrMsg]   = useState("");
+  // step: "email" | "otp"
+  const [step,    setStep]    = useState<"email" | "otp">("email");
+  const [email,   setEmail]   = useState("");
+  const [otp,     setOtp]     = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errMsg,  setErrMsg]  = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Step 1 — send OTP to email
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    if (!email) return;
     setLoading(true); setErrMsg("");
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    console.log("[login] data:", data, "error:", error);
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: false }, // login only, not signup
+    });
     if (error) {
-      setErrMsg(`${error.message} (status: ${error.status})`);
+      setErrMsg(error.message);
+      setLoading(false); return;
+    }
+    setStep("otp");
+    setLoading(false);
+  };
+
+  // Step 2 — verify OTP
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otp || otp.length < 6) return;
+    setLoading(true); setErrMsg("");
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token: otp,
+      type: "email",
+    });
+    if (error) {
+      setErrMsg(error.message);
       setLoading(false); return;
     }
     router.push(from);
@@ -63,67 +85,100 @@ function LoginForm() {
         </div>
 
         <div className="gz-panel" style={{ padding: "36px 32px" }}>
-          <h1 style={{ fontSize: "1.6rem", fontWeight: 900, color: "var(--color-text-primary)", marginBottom: 4 }}>Welcome back</h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem", marginBottom: 28 }}>
-            No account?{" "}
-            <Link href="/signup" style={{ color: "#14b8a6", fontWeight: 700 }}>Create one free</Link>
-          </p>
+          {step === "email" ? (
+            <>
+              <h1 style={{ fontSize: "1.6rem", fontWeight: 900, color: "var(--color-text-primary)", marginBottom: 4 }}>Welcome back</h1>
+              <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem", marginBottom: 28 }}>
+                No account?{" "}
+                <Link href="/signup" style={{ color: "#14b8a6", fontWeight: 700 }}>Create one free</Link>
+              </p>
 
-          {errMsg && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 14px", borderRadius: 10,
-              background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
-              color: "#ef4444", fontSize: "0.85rem", fontWeight: 600, marginBottom: 20 }}>
-              <AlertCircle size={15} style={{ flexShrink: 0 }} /> {errMsg}
-            </div>
-          )}
+              {errMsg && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 14px", borderRadius: 10,
+                  background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
+                  color: "#ef4444", fontSize: "0.85rem", fontWeight: 600, marginBottom: 20 }}>
+                  <AlertCircle size={15} style={{ flexShrink: 0 }} /> {errMsg}
+                </div>
+              )}
 
-          {/* Google */}
-          <button type="button" onClick={handleGoogle} disabled={loading}
-            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-              width: "100%", minHeight: 46, borderRadius: 10, border: "1.5px solid rgba(148,163,184,0.3)",
-              background: "rgba(255,255,255,0.7)", fontWeight: 700, fontSize: "0.9rem",
-              color: "var(--color-text-primary)", cursor: "pointer", marginBottom: 20,
-              transition: "all 160ms ease" }}>
-            {GOOGLE_ICON} Continue with Google
-          </button>
+              {/* Google */}
+              <button type="button" onClick={handleGoogle} disabled={loading}
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+                  width: "100%", minHeight: 46, borderRadius: 10, border: "1.5px solid rgba(148,163,184,0.3)",
+                  background: "rgba(255,255,255,0.7)", fontWeight: 700, fontSize: "0.9rem",
+                  color: "var(--color-text-primary)", cursor: "pointer", marginBottom: 20 }}>
+                {GOOGLE_ICON} Continue with Google
+              </button>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-            <span style={{ flex: 1, height: 1, background: "rgba(148,163,184,0.25)" }} />
-            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--color-text-muted)", textTransform: "uppercase" }}>or</span>
-            <span style={{ flex: 1, height: 1, background: "rgba(148,163,184,0.25)" }} />
-          </div>
-
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: "0.85rem", fontWeight: 700, color: "var(--color-text-primary)" }}>
-              Email address
-              <div style={{ position: "relative" }}>
-                <Mail size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "#94a3b8", pointerEvents: "none" }} />
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                  placeholder="you@example.com" autoComplete="email" required
-                  className="gz-input gz-input-pl" style={{ width: "100%" }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+                <span style={{ flex: 1, height: 1, background: "rgba(148,163,184,0.25)" }} />
+                <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--color-text-muted)", textTransform: "uppercase" }}>or sign in with OTP</span>
+                <span style={{ flex: 1, height: 1, background: "rgba(148,163,184,0.25)" }} />
               </div>
-            </label>
 
-            <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: "0.85rem", fontWeight: 700, color: "var(--color-text-primary)" }}>
-              Password
-              <div style={{ position: "relative" }}>
-                <Lock size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "#94a3b8", pointerEvents: "none" }} />
-                <input type={showPass ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
-                  placeholder="Enter your password" autoComplete="current-password" required
-                  className="gz-input gz-input-pl" style={{ width: "100%", paddingRight: 44 }} />
-                <button type="button" onClick={() => setShowPass(v => !v)}
-                  style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
-                    background: "none", border: "none", cursor: "pointer", color: "#94a3b8", padding: 4 }}>
-                  {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
+              <form onSubmit={handleSendOtp} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: "0.85rem", fontWeight: 700, color: "var(--color-text-primary)" }}>
+                  Email address
+                  <div style={{ position: "relative" }}>
+                    <Mail size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "#94a3b8", pointerEvents: "none" }} />
+                    <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                      placeholder="you@example.com" autoComplete="email" required
+                      className="gz-input gz-input-pl" style={{ width: "100%" }} />
+                  </div>
+                </label>
+                <button type="submit" disabled={loading || !email}
+                  className="gz-cta-btn" style={{ width: "100%", justifyContent: "center" }}>
+                  {loading ? <><Loader2 size={15} className="gz-spin" /> Sending OTP…</> : <>Send OTP <ArrowRight size={15} /></>}
                 </button>
+              </form>
+            </>
+          ) : (
+            <>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(20,184,166,0.12)",
+                  display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <KeyRound size={20} style={{ color: "#14b8a6" }} />
+                </div>
+                <div>
+                  <h1 style={{ fontSize: "1.4rem", fontWeight: 900, color: "var(--color-text-primary)", margin: 0 }}>Enter OTP</h1>
+                  <p style={{ fontSize: "0.82rem", color: "var(--color-text-muted)", margin: "2px 0 0" }}>Sent to {email}</p>
+                </div>
               </div>
-            </label>
 
-            <button type="submit" disabled={loading || !email || !password}
-              className="gz-cta-btn" style={{ width: "100%", justifyContent: "center", marginTop: 4 }}>
-              {loading ? <><Loader2 size={15} className="gz-spin" /> Signing in…</> : <>Sign in <ArrowRight size={15} /></>}
-            </button>
-          </form>
+              {errMsg && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 14px", borderRadius: 10,
+                  background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
+                  color: "#ef4444", fontSize: "0.85rem", fontWeight: 600, marginBottom: 20 }}>
+                  <AlertCircle size={15} style={{ flexShrink: 0 }} /> {errMsg}
+                </div>
+              )}
+
+              <form onSubmit={handleVerifyOtp} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: "0.85rem", fontWeight: 700, color: "var(--color-text-primary)" }}>
+                  6-digit OTP
+                  <input
+                    type="text" inputMode="numeric" pattern="[0-9]*"
+                    value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="000000" autoComplete="one-time-code" required
+                    className="gz-input"
+                    style={{
+                      width: "100%", textAlign: "center", fontSize: "1.8rem",
+                      fontWeight: 900, letterSpacing: "0.3em", fontFamily: "monospace",
+                    }}
+                  />
+                </label>
+                <button type="submit" disabled={loading || otp.length < 6}
+                  className="gz-cta-btn" style={{ width: "100%", justifyContent: "center" }}>
+                  {loading ? <><Loader2 size={15} className="gz-spin" /> Verifying…</> : <>Verify & Sign in <ArrowRight size={15} /></>}
+                </button>
+                <button type="button" onClick={() => { setStep("email"); setOtp(""); setErrMsg(""); }}
+                  style={{ background: "none", border: "none", color: "#14b8a6", fontWeight: 700,
+                    fontSize: "0.85rem", cursor: "pointer", textAlign: "center" }}>
+                  ← Use a different email
+                </button>
+              </form>
+            </>
+          )}
 
           <p style={{ marginTop: 20, textAlign: "center", fontSize: "0.8rem", color: "var(--color-text-muted)" }}>
             By signing in you agree to our{" "}
@@ -132,7 +187,6 @@ function LoginForm() {
           </p>
         </div>
 
-        {/* perks */}
         <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 28, flexWrap: "wrap" }}>
           {["Live tracking", "Saved addresses", "Order history"].map(p => (
             <span key={p} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.8rem", color: "var(--color-text-muted)", fontWeight: 600 }}>

@@ -456,9 +456,11 @@ export default function OrderPage() {
     const id = `FW-${Date.now().toString().slice(-6)}`;
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
+    const userId = session?.user?.id ?? null;
 
     const payload = {
       id,
+      user_id: userId,
       customer_name: form.name.trim(),
       customer_phone: form.phone.trim(),
       pickup_address: form.address.trim(),
@@ -470,18 +472,7 @@ export default function OrderPage() {
     };
 
     try {
-      // Step 1: Save order to DB
-      const orderRes = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify(payload),
-      });
-      if (!orderRes.ok) {
-        const err = await orderRes.json() as { error?: string };
-        throw new Error(err.error ?? "Failed to place order");
-      }
-
-      // Step 2: Create Razorpay order
+      // Step 1: Create Razorpay order (do NOT save to DB yet)
       const rzpRes = await fetch("/api/payment/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -495,7 +486,7 @@ export default function OrderPage() {
         razorpayOrderId: string; amount: number; currency: string;
       };
 
-      // Step 3: Open Razorpay checkout
+      // Step 2: Open Razorpay checkout
       await new Promise<void>((resolve, reject) => {
         const rzpKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "rzp_test_Sqnq736i26gVbV"; // public test key
         const options = {
@@ -516,11 +507,14 @@ export default function OrderPage() {
             razorpay_signature: string;
           }) => {
             try {
-              // Step 4: Verify payment server-side
+              // Step 3: Verify payment AND save order to DB in one step
               const verifyRes = await fetch("/api/payment/verify", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...response, orderId: id }),
+                body: JSON.stringify({
+                  ...response,
+                  orderPayload: payload,
+                }),
               });
               if (!verifyRes.ok) {
                 const err = await verifyRes.json() as { error?: string };
@@ -533,19 +527,16 @@ export default function OrderPage() {
             }
           },
           modal: {
-            ondismiss: () => reject(new Error("Payment cancelled. Your order has been saved — you can retry payment from the track page.")),
+            ondismiss: () => reject(new Error("Payment cancelled.")),
           },
         };
 
         if (typeof window !== "undefined") {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const rzp = new (window as any).Razorpay(options);
-
-          // Handle payment failure event
           rzp.on("payment.failed", (response: { error: { description: string; reason: string } }) => {
             reject(new Error(`Payment failed: ${response.error.description ?? response.error.reason ?? "Unknown error"}`));
           });
-
           rzp.open();
         } else {
           reject(new Error("Razorpay is not available"));
