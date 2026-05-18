@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { serverClient } from '@/lib/supabaseServer';
 
+const RZP_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET ?? 'KS2VqKRVSQnoX8kGluBZi1bN';
+
 // POST /api/payment/verify
-// Verifies Razorpay payment signature and updates order status
 export async function POST(request: Request) {
   try {
     const {
@@ -12,16 +13,20 @@ export async function POST(request: Request) {
       razorpay_signature,
       orderId,
     } = await request.json() as {
-      razorpay_order_id:  string;
+      razorpay_order_id:   string;
       razorpay_payment_id: string;
-      razorpay_signature: string;
-      orderId: string;
+      razorpay_signature:  string;
+      orderId:             string;
     };
 
-    // Verify signature
-    const body      = `${razorpay_order_id}|${razorpay_payment_id}`;
-    const expected  = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!)
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !orderId) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Verify HMAC-SHA256 signature
+    const body     = `${razorpay_order_id}|${razorpay_payment_id}`;
+    const expected = crypto
+      .createHmac('sha256', RZP_KEY_SECRET)
       .update(body)
       .digest('hex');
 
@@ -29,7 +34,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid payment signature' }, { status: 400 });
     }
 
-    // Update order status to "Order received" (payment confirmed)
+    // Update order status to "Order received"
     const supabase = serverClient();
     const { error } = await supabase
       .from('orders')
