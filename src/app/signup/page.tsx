@@ -35,8 +35,9 @@ export default function SignupPage() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        shouldCreateUser: true, // creates account if not exists
+        shouldCreateUser: true,
         data: { full_name: name },
+        emailRedirectTo: undefined, // force OTP code, not magic link
       },
     });
 

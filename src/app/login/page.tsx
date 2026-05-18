@@ -34,7 +34,10 @@ function LoginForm() {
     setLoading(true); setErrMsg("");
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { shouldCreateUser: false }, // login only, not signup
+      options: {
+        shouldCreateUser: false, // login only, not signup
+        emailRedirectTo: undefined, // force OTP code, not magic link
+      },
     });
     if (error) {
       setErrMsg(error.message);
