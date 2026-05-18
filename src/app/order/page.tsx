@@ -497,11 +497,7 @@ export default function OrderPage() {
 
       // Step 3: Open Razorpay checkout
       await new Promise<void>((resolve, reject) => {
-        const rzpKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-        if (!rzpKey) {
-          reject(new Error("Razorpay key not configured"));
-          return;
-        }
+        const rzpKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "rzp_test_Sqnq736i26gVbV";
         const options = {
           key:         rzpKey,
           amount:      rzpAmount,
