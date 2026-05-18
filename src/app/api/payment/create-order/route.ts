@@ -40,10 +40,11 @@ export async function POST(request: Request) {
       currency:        razorpayOrder.currency,
     });
   } catch (err) {
-    console.error('[create-order]', err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Failed to create payment order' },
-      { status: 500 },
-    );
+    console.error('[create-order]', JSON.stringify(err));
+    const message = err instanceof Error ? err.message
+      : typeof err === 'object' && err !== null && 'error' in err
+        ? JSON.stringify((err as { error: unknown }).error)
+        : 'Failed to create payment order';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
