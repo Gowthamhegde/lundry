@@ -497,13 +497,18 @@ export default function OrderPage() {
 
       // Step 3: Open Razorpay checkout
       await new Promise<void>((resolve, reject) => {
+        const rzpKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+        if (!rzpKey) {
+          reject(new Error("Razorpay key not configured"));
+          return;
+        }
         const options = {
-          key:      process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-          amount:   rzpAmount,
+          key:         rzpKey,
+          amount:      rzpAmount,
           currency,
-          name:     "FreshWash",
+          name:        "FreshWash",
           description: `Order ${id}`,
-          order_id: razorpayOrderId,
+          order_id:    razorpayOrderId,
           prefill: {
             name:    form.name.trim(),
             contact: form.phone.trim(),
@@ -532,15 +537,22 @@ export default function OrderPage() {
             }
           },
           modal: {
-            ondismiss: () => reject(new Error("Payment cancelled")),
+            ondismiss: () => reject(new Error("Payment cancelled. Your order has been saved — you can retry payment from the track page.")),
           },
         };
 
-        // Load Razorpay script dynamically
         if (typeof window !== "undefined") {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const rzp = new (window as any).Razorpay(options);
+
+          // Handle payment failure event
+          rzp.on("payment.failed", (response: { error: { description: string; reason: string } }) => {
+            reject(new Error(`Payment failed: ${response.error.description ?? response.error.reason ?? "Unknown error"}`));
+          });
+
           rzp.open();
+        } else {
+          reject(new Error("Razorpay is not available"));
         }
       });
 
