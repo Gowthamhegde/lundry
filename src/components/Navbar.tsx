@@ -26,13 +26,25 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [authed, setAuthed] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setAuthed(!!session));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const updateAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setAuthed(!!session);
+      if (session?.user?.id) {
+        const { data } = await supabase.from("profiles").select("role").eq("id", session.user.id).maybeSingle();
+        setIsAdmin((data as { role?: string } | null)?.role === "admin");
+      } else {
+        setIsAdmin(false);
+      }
+    };
+
+    updateAuth();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      updateAuth();
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -79,7 +91,9 @@ export default function Navbar() {
     router.push("/login");
   };
 
-  const visibleLinks = authed ? [...publicLinks, ...authLinks] : publicLinks;
+  const visibleLinks = authed
+    ? [...publicLinks, ...authLinks, ...(isAdmin ? [{ name: "Admin", path: "/admin" }] : [])]
+    : publicLinks;
   const isActive = (path: string) => path === "/" ? pathname === "/" : pathname.startsWith(path);
 
   return (
@@ -91,6 +105,11 @@ export default function Navbar() {
             <span>Bengaluru · garment care, without the fuss</span>
             <span className="site-nav__utility-right">
               <span>Payments by Razorpay</span>
+              {isAdmin && (
+                <Link href="/admin" style={{ color: "#14b8a6", fontWeight: 800 }}>
+                  Admin Panel
+                </Link>
+              )}
               <Link href={authed ? "/track" : "/login"}>{authed ? "Your orders" : "Sign in"}</Link>
             </span>
           </div>
