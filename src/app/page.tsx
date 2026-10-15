@@ -1,4 +1,5 @@
 import Link from "next/link";
+import CookieSettingsButton from "@/components/CookieSettingsButton";
 import {
   ArrowDown,
   ArrowUp,
@@ -50,10 +51,10 @@ const features = [
 ];
 
 const stats = [
-  { value: "10,000+", label: "Orders completed" },
-  { value: "4.9 ★",  label: "Average rating" },
-  { value: "24h",    label: "Avg. turnaround" },
-  { value: "98%",    label: "On-time delivery" },
+  { value: "Bengaluru", label: "Service area" },
+  { value: "Pickup", label: "Convenient service" },
+  { value: "Razorpay", label: "Online payments" },
+  { value: "RinseUp", label: "Garment care" },
 ];
 
 const pricingPlans = [
@@ -120,7 +121,7 @@ export default function Home() {
             24h<br /><span>turnaround</span>
           </div>
           <div className="orbit-card card-b">
-            4.9<br /><span>rated</span>
+            Care<br /><span>focused</span>
           </div>
           <div className="machine">
             <div className="machine-top" />
@@ -139,7 +140,7 @@ export default function Home() {
         </a>
       </section>
 
-      {/* ── Why FreshWash ── */}
+      {/* ── Why RinseUp ── */}
       <section className="content-section why-section" id="services">
 
         {/* Stats bar */}
@@ -153,10 +154,10 @@ export default function Home() {
         </div>
 
         {/* Heading */}
-        <div className="section-kicker" style={{ marginTop: "64px" }}>Why FreshWash</div>
+        <div className="section-kicker" style={{ marginTop: "64px" }}>Why RinseUp</div>
         <h2 className="split-heading static-heading">Laundry that actually works for you</h2>
         <p className="section-copy">
-          We built FreshWash around one idea — your time is worth more than laundry day.
+          We built RinseUp around one idea — your time is worth more than laundry day.
           Here&apos;s what makes us different.
         </p>
 
@@ -260,9 +261,9 @@ export default function Home() {
 
       {/* ── Footer ── */}
       <footer className="genz-footer" id="footer">
-        <div className="footer-watermark" aria-hidden="true">FreshWash</div>
+        <div className="footer-watermark" aria-hidden="true">RinseUp</div>
         <div>
-          <h2>FreshWash</h2>
+          <h2>RinseUp</h2>
           <p>Clean clothes. Sharp schedules. No corporate aftertaste.</p>
         </div>
         <div className="footer-links">
@@ -271,9 +272,15 @@ export default function Home() {
           <a href="#pricing">Pricing</a>
           <Link href="/order">Booking</Link>
           <Link href="/admin" className="footer-admin-link">Admin login</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
+          <Link href="/cookies">Cookies</Link>
+          <Link href="/refunds">Refunds</Link>
+          <Link href="/about">About</Link>
+          <CookieSettingsButton />
         </div>
         <div className="footer-bottom-row">
-          <p className="footer-copy-text">© {new Date().getFullYear()} FreshWash. All rights reserved.</p>
+          <p className="footer-copy-text">© {new Date().getFullYear()} RinseUp. All rights reserved.</p>
           <a className="back-top" href="#hero" aria-label="Back to top">
             <ArrowUp size={20} />
           </a>

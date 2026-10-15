@@ -39,13 +39,14 @@ export default function CheckoutPage() {
   const [pincode, setPincode] = useState("");
   const [notes, setNotes] = useState("");
   const [saved, setSaved] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   useEffect(() => {
     queueMicrotask(() => setSelectedServices(readSelectedServices()));
   }, []);
 
   const total = useMemo(() => selectedServices.reduce((sum, service) => sum + service.price, 0), [selectedServices]);
-  const canSubmit = name.trim() && phone.trim() && address.trim() && city.trim() && selectedServices.length > 0;
+  const canSubmit = name.trim() && phone.trim() && address.trim() && city.trim() && selectedServices.length > 0 && termsAccepted;
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -117,6 +118,11 @@ export default function CheckoutPage() {
                 <input value={notes} onChange={(event) => setNotes(event.target.value)} className="studio-input" placeholder="Additional notes" />
               </div>
             </div>
+
+            <label className="flex items-start gap-2 text-xs text-[var(--color-text-muted)]">
+              <input type="checkbox" checked={termsAccepted} onChange={(event) => setTermsAccepted(event.target.checked)} required />
+              <span>I agree to the <Link href="/terms" className="font-bold text-teal-600">Terms</Link> and <Link href="/privacy" className="font-bold text-teal-600">Privacy Policy</Link>. We use these details to arrange your order.</span>
+            </label>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <button type="button" onClick={() => router.push("/services")} className="studio-secondary-button">

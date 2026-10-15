@@ -1,5 +1,5 @@
 -- ============================================================
--- FreshWash — Supabase Schema
+-- RinseUp — Supabase Schema
 -- Run this in the Supabase SQL Editor (Dashboard → SQL Editor)
 -- ============================================================
 
@@ -102,12 +102,17 @@ create table if not exists public.site_config (
 
 -- Seed default config values
 insert into public.site_config (key, value) values
-  ('companyName',   'FreshWash'),
+  ('companyName',   'RinseUp'),
   ('heroTitle',     'Your fit. Always Fresh.'),
   ('heroSubtitle',  'Premium pickup, wash, fold, press, and delivery — clean app flow, zero waiting-room energy.'),
-  ('contactEmail',  'support@freshwash.demo'),
-  ('contactPhone',  '+91 98765 43210')
+  ('contactEmail',  'support@rinseup.demo'),
+  ('contactPhone',  'Not provided')
 on conflict do nothing;
+
+-- Keep the public brand name aligned for projects created before the rename.
+update public.site_config
+set value = 'RinseUp', updated_at = now()
+where key = 'companyName';
 
 -- ── Row Level Security ────────────────────────────────────────
 

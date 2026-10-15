@@ -174,7 +174,7 @@ function TrackContent() {
   const [mounted,  setMounted]  = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    queueMicrotask(() => setMounted(true));
     (async () => {
       // Try Supabase first (logged-in users), fall back to localStorage
       const dbOrders = await fetchOrdersFromDB();

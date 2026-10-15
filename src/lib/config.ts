@@ -7,9 +7,9 @@ export type SiteConfig = {
 };
 
 export const defaultSiteConfig: SiteConfig = {
-  companyName: "FreshWash",
+  companyName: "RinseUp",
   heroTitle: "Laundry done beautifully.",
   heroSubtitle: "Experience the next level of garment care. Fast, reliable, and perfectly tailored to your lifestyle. We handle the chores so you can handle life.",
-  contactEmail: "support@freshwash.demo",
-  contactPhone: "+1 (555) 123-4567"
+  contactEmail: "support@rinseup.demo",
+  contactPhone: "Not provided"
 };

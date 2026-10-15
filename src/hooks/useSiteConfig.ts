@@ -18,7 +18,7 @@ export function useSiteConfig() {
       const res = await fetch("/api/site-config");
       if (!res.ok) throw new Error(await res.text());
       const data: Partial<SiteConfig> = await res.json();
-      setConfig({ ...defaultSiteConfig, ...data });
+      setConfig({ ...defaultSiteConfig, ...data, companyName: "RinseUp" });
     } catch {
       // Fall back to defaults silently
       setConfig(defaultSiteConfig);
@@ -27,7 +27,7 @@ export function useSiteConfig() {
     }
   }, []);
 
-  useEffect(() => { fetchConfig(); }, [fetchConfig]);
+  useEffect(() => { queueMicrotask(() => fetchConfig()); }, [fetchConfig]);
 
   const saveConfig = async (newConfig: SiteConfig) => {
     const token = await getAuthToken();
@@ -37,7 +37,7 @@ export function useSiteConfig() {
       body: JSON.stringify(newConfig),
     });
     if (!res.ok) throw new Error(await res.text());
-    setConfig(newConfig);
+    setConfig({ ...newConfig, companyName: "RinseUp" });
   };
 
   return { config, saveConfig, isLoaded, refetch: fetchConfig };

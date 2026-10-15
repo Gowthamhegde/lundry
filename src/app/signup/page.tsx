@@ -25,11 +25,12 @@ export default function SignupPage() {
   const [otp,     setOtp]     = useState("");
   const [loading, setLoading] = useState(false);
   const [errMsg,  setErrMsg]  = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Step 1 — collect name + email, send OTP
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email) return;
+    if (!name || !email || !termsAccepted) return;
     setLoading(true); setErrMsg("");
 
     const { error } = await supabase.auth.signInWithOtp({
@@ -72,7 +73,9 @@ export default function SignupPage() {
     setLoading(true); setErrMsg("");
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/order` },
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent("/order")}`,
+      },
     });
     if (error) { setErrMsg(error.message); setLoading(false); }
   };
@@ -88,7 +91,7 @@ export default function SignupPage() {
           <div style={{ width: 40, height: 40, borderRadius: 12, background: "linear-gradient(135deg,#14b8a6,#2563eb)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Shirt size={20} color="white" />
           </div>
-          <span style={{ fontSize: "1.3rem", fontWeight: 900, color: "var(--color-text-primary)" }}>FreshWash</span>
+          <span style={{ fontSize: "1.3rem", fontWeight: 900, color: "var(--color-text-primary)" }}>RinseUp</span>
         </div>
 
         <div className="gz-panel" style={{ padding: "36px 32px" }}>
@@ -123,7 +126,7 @@ export default function SignupPage() {
                 <span style={{ flex: 1, height: 1, background: "rgba(148,163,184,0.25)" }} />
               </div>
 
-              <form onSubmit={handleSendOtp} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                        <form onSubmit={handleSendOtp} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: "0.85rem", fontWeight: 700, color: "var(--color-text-primary)" }}>
                   Full name
                   <div style={{ position: "relative" }}>
@@ -144,7 +147,12 @@ export default function SignupPage() {
                   </div>
                 </label>
 
-                <button type="submit" disabled={loading || !name || !email}
+                <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: "0.78rem", color: "var(--color-text-muted)" }}>
+                  <input type="checkbox" checked={termsAccepted} onChange={e => setTermsAccepted(e.target.checked)} required />
+                  <span>I agree to the <Link href="/terms" style={{ color: "#14b8a6" }}>Terms</Link> and <Link href="/privacy" style={{ color: "#14b8a6" }}>Privacy Policy</Link>.</span>
+                </label>
+
+                <button type="submit" disabled={loading || !name || !email || !termsAccepted}
                   className="gz-cta-btn" style={{ width: "100%", justifyContent: "center" }}>
                   {loading ? <><Loader2 size={15} className="gz-spin" /> Sending OTP…</> : <>Send OTP <ArrowRight size={15} /></>}
                 </button>
@@ -206,9 +214,7 @@ export default function SignupPage() {
           )}
 
           <p style={{ marginTop: 20, textAlign: "center", fontSize: "0.8rem", color: "var(--color-text-muted)" }}>
-            By signing up you agree to our{" "}
-            <Link href="#" style={{ color: "#14b8a6" }}>Terms</Link> &amp;{" "}
-            <Link href="#" style={{ color: "#14b8a6" }}>Privacy</Link>.
+            We use your name and email to create your account and deliver sign-in codes.
           </p>
         </div>
       </div>

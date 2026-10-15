@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, type FormEvent } from "react";
 import {
-  AlertCircle, BarChart3, Calendar, CheckCircle2, ChevronDown,
+  AlertCircle, BarChart3, Calendar, CheckCircle2,
   Edit2, Loader2, Lock, LogOut, MapPin, Package, Phone,
   Plus, RefreshCw, Save, Settings, ShieldCheck,
   Sparkles, Trash2, User, X,
@@ -323,7 +323,9 @@ export default function AdminPage() {
   const { orders, loading: ordLoading, refetch: refetchOrders, updateOrderStatus } = useOrders();
   const [siteForm, setSiteForm] = useState(config);
 
-  useEffect(() => { if (cfgLoaded) setSiteForm(config); }, [cfgLoaded, config]);
+  useEffect(() => {
+    if (cfgLoaded) queueMicrotask(() => setSiteForm(config));
+  }, [cfgLoaded, config]);
 
   useEffect(() => {
     (async () => {

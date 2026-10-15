@@ -35,7 +35,7 @@ export function useOrders() {
     }
   }, []);
 
-  useEffect(() => { fetchOrders(); }, [fetchOrders]);
+  useEffect(() => { queueMicrotask(() => fetchOrders()); }, [fetchOrders]);
 
   const updateOrderStatus = async (id: string, status: OrderStatus) => {
     const token = await getAuthToken();

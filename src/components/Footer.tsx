@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Mail, MapPin, Phone, Shirt } from "lucide-react";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
+import CookieSettingsButton from "@/components/CookieSettingsButton";
 
 export default function Footer() {
   const { config } = useSiteConfig();
@@ -27,7 +28,7 @@ export default function Footer() {
                 <Shirt className="h-5 w-5 text-white" />
               </div>
               <span className="text-lg font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-emerald-400 tracking-tight">
-                {config.companyName || "FreshWash"}
+                {config.companyName || "RinseUp"}
               </span>
             </Link>
             <p className="text-sm text-gray-500 leading-relaxed">
@@ -80,15 +81,15 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li className="flex items-start gap-2.5">
                 <Mail className="h-4 w-4 text-teal-500 mt-0.5 shrink-0" />
-                <span>{config.contactEmail || "freshwash@example.com"}</span>
+                <span>{config.contactEmail || "support@rinseup.demo"}</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <Phone className="h-4 w-4 text-teal-500 mt-0.5 shrink-0" />
-                <span>{config.contactPhone || "+1 (555) 123-4567  "}</span>
+                <span>{config.contactPhone || "Not provided"}</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <MapPin className="h-4 w-4 text-teal-500 mt-0.5 shrink-0" />
-                <span>123 Laundry St, Clean City</span>
+                <span>Bengaluru, Karnataka</span>
               </li>
             </ul>
 
@@ -106,10 +107,16 @@ export default function Footer() {
 
         {/* ── Bottom bar ── */}
         <div className="mt-12 pt-6 border-t border-gray-800/60 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-gray-600">
-          <p>© {year} {config.companyName || "FreshWash"}. All rights reserved.</p>
+          <p>© {year} {config.companyName || "RinseUp"}. All rights reserved.</p>
           <div className="flex gap-5">
             <Link href="/services" className="hover:text-gray-400 transition-colors">Service menu</Link>
             <Link href="/order"    className="hover:text-gray-400 transition-colors">Book pickup</Link>
+            <Link href="/privacy" className="hover:text-gray-400 transition-colors">Privacy</Link>
+            <Link href="/terms" className="hover:text-gray-400 transition-colors">Terms</Link>
+            <Link href="/cookies" className="hover:text-gray-400 transition-colors">Cookies</Link>
+            <Link href="/refunds" className="hover:text-gray-400 transition-colors">Refunds</Link>
+            <Link href="/about" className="hover:text-gray-400 transition-colors">About</Link>
+            <CookieSettingsButton />
           </div>
         </div>
       </div>

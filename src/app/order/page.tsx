@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef, useCallback, type ChangeEvent, type FormEvent } from "react";
+import { useMemo, useState, useEffect, useRef, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import {
   CalendarDays, CheckCircle2, ChevronRight, ChevronLeft, Clock,
@@ -150,21 +150,6 @@ function DatePicker({ value, onChange }: { value: string; onChange: (v: string) 
 }
 
 // ── Custom Time Picker ────────────────────────────────────────
-
-// Convert "3:30 PM" → "15:30" for storage
-function to24h(slot: string): string {
-  const isPM = slot.includes("PM");
-  const isAM = slot.includes("AM");
-  const clean = slot.replace(/\s?(AM|PM)/i, "").trim();
-  const [hStr, mStr] = clean.split(":");
-  let h = parseInt(hStr, 10);
-  const m = mStr ?? "00";
-  if (isPM && h !== 12) h += 12;
-  if (isAM && h === 12) h = 0;
-  // For slots without AM/PM, treat < 6 as PM (afternoon)
-  if (!isPM && !isAM && h < 6) h += 12;
-  return `${String(h).padStart(2,"0")}:${m}`;
-}
 
 // Convert "15:30" → "3:30 PM"
 function to12h(val: string): string {
@@ -424,6 +409,7 @@ export default function OrderPage() {
   const [form,       setForm]       = useState<OrderForm>(INIT);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // screens: "form" | "waiting" | "confirmed"
   const [screen,        setScreen]        = useState<"form" | "waiting" | "confirmed">("form");
@@ -434,7 +420,7 @@ export default function OrderPage() {
   const total  = useMemo(() => picked.reduce((n, s) => n + s.price * (qty[s.id] || 1), 0), [picked, qty]);
 
   const ok = picked.length > 0 && form.name.trim().length > 1 &&
-    form.phone.trim().length > 6 && form.address.trim().length > 6;
+    form.phone.trim().length > 6 && form.address.trim().length > 6 && termsAccepted;
 
   const upd = (f: keyof OrderForm) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((c) => ({ ...c, [f]: e.target.value }));
@@ -455,7 +441,6 @@ export default function OrderPage() {
 
     const id = `FW-${Date.now().toString().slice(-6)}`;
     const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
     const userId = session?.user?.id ?? null;
 
     const payload = {
@@ -493,7 +478,7 @@ export default function OrderPage() {
           key:         rzpKey,
           amount:      rzpAmount,
           currency,
-          name:        "FreshWash",
+          name:        "RinseUp",
           description: `Order ${id}`,
           order_id:    razorpayOrderId,
           prefill: {
@@ -646,6 +631,11 @@ export default function OrderPage() {
                 {submitError}
               </p>
             )}
+
+            <label className="flex items-start gap-2 text-xs text-[var(--color-text-muted)]">
+              <input type="checkbox" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} required />
+              <span>I agree to the <Link href="/terms" className="font-bold text-teal-600">Terms</Link> and <Link href="/privacy" className="font-bold text-teal-600">Privacy Policy</Link>. We use these details to arrange your order and payment.</span>
+            </label>
 
             <div className="gz-form-actions">
               <Link href="/services" className="gz-ghost-btn">← Browse services</Link>

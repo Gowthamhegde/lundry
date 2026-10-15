@@ -68,7 +68,9 @@ function LoginForm() {
     setLoading(true); setErrMsg("");
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}${from}` },
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(from)}`,
+      },
     });
     if (error) { setErrMsg(error.message); setLoading(false); }
   };
@@ -84,7 +86,7 @@ function LoginForm() {
           <div style={{ width: 40, height: 40, borderRadius: 12, background: "linear-gradient(135deg,#14b8a6,#2563eb)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Shirt size={20} color="white" />
           </div>
-          <span style={{ fontSize: "1.3rem", fontWeight: 900, color: "var(--color-text-primary)" }}>FreshWash</span>
+          <span style={{ fontSize: "1.3rem", fontWeight: 900, color: "var(--color-text-primary)" }}>RinseUp</span>
         </div>
 
         <div className="gz-panel" style={{ padding: "36px 32px" }}>
@@ -185,8 +187,8 @@ function LoginForm() {
 
           <p style={{ marginTop: 20, textAlign: "center", fontSize: "0.8rem", color: "var(--color-text-muted)" }}>
             By signing in you agree to our{" "}
-            <Link href="#" style={{ color: "#14b8a6" }}>Terms</Link> &amp;{" "}
-            <Link href="#" style={{ color: "#14b8a6" }}>Privacy</Link>.
+            <Link href="/terms" style={{ color: "#14b8a6" }}>Terms</Link> &amp;{" "}
+            <Link href="/privacy" style={{ color: "#14b8a6" }}>Privacy</Link>.
           </p>
         </div>
 

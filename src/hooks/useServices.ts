@@ -44,7 +44,7 @@ export function useServices() {
     }
   }, []);
 
-  useEffect(() => { fetchServices(); }, [fetchServices]);
+  useEffect(() => { queueMicrotask(() => fetchServices()); }, [fetchServices]);
 
   const addService = async (service: Omit<Service, "id" | "created_at" | "updated_at" | "active">) => {
     const token = await getAuthToken();

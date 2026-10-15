@@ -1,4 +1,26 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RinseUp
+
+RinseUp is a Next.js laundry service application backed by Supabase.
+
+## Supabase setup
+
+Create `.env.local` with:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
+
+Run [`supabase/schema.sql`](./supabase/schema.sql) in the Supabase SQL Editor.
+
+To enable Google sign-in:
+
+1. Enable Google under **Authentication → Providers** in the Supabase dashboard.
+2. Add `http://localhost:3000/auth/callback` to **Authentication → URL Configuration → Redirect URLs**.
+3. Add the production callback URL using the same `/auth/callback` path.
+
+The OAuth callback exchanges Supabase's PKCE authorization code before redirecting
+the user to the requested page.
 
 ## Getting Started
 
