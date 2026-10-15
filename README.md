@@ -15,15 +15,21 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are browser-safe Supabase
 values required by the client SDK. Keep `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
-and all Razorpay secrets server-only.
+`GOOGLE_CLIENT_SECRET`, and all Razorpay secrets server-only. The Google client ID is
+configuration rather than a secret, but it should still be kept in `.env.local` and
+never hard-coded in source.
 
 Run [`supabase/schema.sql`](./supabase/schema.sql) in the Supabase SQL Editor.
 
 To enable Google sign-in:
 
 1. Enable Google under **Authentication → Providers** in the Supabase dashboard.
-2. Add `http://localhost:3000/auth/callback` to **Authentication → URL Configuration → Redirect URLs**.
-3. Add the production callback URL using the same `/auth/callback` path.
+2. Enter the Google OAuth client ID and client secret from Google Cloud Console in
+   the provider settings. If you keep a local copy, use the variables in
+   `.env.local`; the application delegates the OAuth exchange to Supabase and
+   does not expose `GOOGLE_CLIENT_SECRET` to the browser.
+3. Add `http://localhost:3000/auth/callback` to **Authentication → URL Configuration → Redirect URLs**.
+4. Add the production callback URL using the same `/auth/callback` path.
 
 The OAuth callback exchanges Supabase's PKCE authorization code before redirecting
 the user to the requested page.
