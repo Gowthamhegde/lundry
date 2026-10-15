@@ -9,7 +9,13 @@ Create `.env.local` with:
 ```text
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_URL=your-supabase-project-url
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
+
+`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are browser-safe Supabase
+values required by the client SDK. Keep `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
+and all Razorpay secrets server-only.
 
 Run [`supabase/schema.sql`](./supabase/schema.sql) in the Supabase SQL Editor.
 

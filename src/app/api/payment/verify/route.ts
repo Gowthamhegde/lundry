@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { serverClient } from '@/lib/supabaseServer';
 
-const RZP_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET ?? 'KS2VqKRVSQnoX8kGluBZi1bN';
-
 // POST /api/payment/verify
 // Verifies Razorpay signature, THEN saves the order to the database.
 // Order only appears in admin dashboard after successful payment.
@@ -34,10 +32,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
+    if (!razorpayKeySecret) {
+      return NextResponse.json({ error: 'Payment service is not configured.' }, { status: 503 });
+    }
+
     // ── Step 1: Verify HMAC-SHA256 signature ──
     const sigBody  = `${razorpay_order_id}|${razorpay_payment_id}`;
     const expected = crypto
-      .createHmac('sha256', RZP_KEY_SECRET)
+      .createHmac('sha256', razorpayKeySecret)
       .update(sigBody)
       .digest('hex');
 
